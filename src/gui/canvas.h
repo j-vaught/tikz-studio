@@ -3,6 +3,7 @@
 
 #include <QGraphicsScene>
 #include <QMap>
+#include <QJsonArray>
 #include "common.h"
 
 class Document;
@@ -41,6 +42,15 @@ public:
 
     // Delete selected items
     void deleteSelected();
+
+    // Selection operations
+    void selectAll();
+
+    // Clipboard operations
+    void cutSelected();
+    void copySelected();
+    void paste();
+    void duplicate();
 
     // Grid and axis visibility
     bool gridVisible() const { return m_gridVisible; }
@@ -118,6 +128,14 @@ private:
     bool m_gridVisible = true;
     bool m_axesVisible = true;
     bool m_axisTicksVisible = true;
+
+    // Clipboard data (stored as JSON)
+    QJsonArray m_clipboardPoints;
+    QJsonArray m_clipboardLines;
+    QJsonArray m_clipboardPolygons;
+    QJsonArray m_clipboardCurves;
+    QJsonArray m_clipboardEllipses;
+    QPointF m_clipboardCenter;  // Center of copied shapes for paste offset
 };
 
 #endif // CANVAS_H

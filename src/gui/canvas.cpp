@@ -5,6 +5,7 @@
 #include "polygon.h"
 #include "curve.h"
 #include "ellipse.h"
+#include "commands.h"
 #include "pointitem.h"
 #include "lineitem.h"
 #include "polygonitem.h"
@@ -21,6 +22,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QInputDialog>
+#include <QJsonObject>
 #include <QtMath>
 
 Canvas::Canvas(Document *doc, QObject *parent)
@@ -152,20 +154,368 @@ void Canvas::addEllipseItem(Ellipse *ellipse) {
 
 void Canvas::deleteSelected() {
     QList<QGraphicsItem*> selected = selectedItems();
+    if (selected.isEmpty()) return;
+
+    // Collect all shapes to delete
+    QVector<Point*> points;
+    QVector<Line*> lines;
+    QVector<Polygon*> polygons;
+    QVector<Curve*> curves;
+    QVector<Ellipse*> ellipses;
 
     for (QGraphicsItem *item : selected) {
         if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
-            m_document->removePoint(pi->point());
+            points.append(pi->point());
         } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
-            m_document->removeLine(li->line());
+            lines.append(li->line());
         } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
-            m_document->removePolygon(pi->polygon());
+            polygons.append(pi->polygon());
         } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
-            m_document->removeCurve(ci->curve());
+            curves.append(ci->curve());
         } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
-            m_document->removeEllipse(ei->ellipse());
+            ellipses.append(ei->ellipse());
         }
     }
+
+    // Create composite delete command and push to undo stack
+    m_document->undoStack()->push(
+        new DeleteSelectionCommand(m_document, points, lines, polygons, curves, ellipses)
+    );
+}
+
+void Canvas::selectAll() {
+    for (QGraphicsItem *item : items()) {
+        if (item->flags() & QGraphicsItem::ItemIsSelectable) {
+            item->setSelected(true);
+        }
+    }
+}
+
+// Helper functions for clipboard serialization
+namespace {
+
+QJsonObject serializePoint(Point *p) {
+    QJsonObject obj;
+    obj["name"] = p->name();
+    obj["x"] = p->pos().x();
+    obj["y"] = p->pos().y();
+    obj["color"] = p->color().name();
+    obj["radius"] = p->radius();
+    obj["visible"] = p->isVisible();
+    return obj;
+}
+
+QJsonObject serializeLine(Line *l) {
+    QJsonObject obj;
+    obj["startX"] = l->startPos().x();
+    obj["startY"] = l->startPos().y();
+    obj["endX"] = l->endPos().x();
+    obj["endY"] = l->endPos().y();
+    obj["color"] = l->color().name();
+    obj["lineWidth"] = l->lineWidth();
+    obj["lineStyle"] = static_cast<int>(l->lineStyle());
+    obj["lineCap"] = static_cast<int>(l->lineCap());
+    obj["lineJoin"] = static_cast<int>(l->lineJoin());
+    obj["cornerRadius"] = l->cornerRadius();
+    obj["rotation"] = l->rotation();
+    obj["scale"] = l->scale();
+    return obj;
+}
+
+QJsonObject serializePolygon(Polygon *p) {
+    QJsonObject obj;
+    QJsonArray verts;
+    for (const Vertex &v : p->vertices()) {
+        QJsonObject vobj;
+        vobj["x"] = v.pos.x();
+        vobj["y"] = v.pos.y();
+        vobj["cornerRadius"] = v.cornerRadius;
+        verts.append(vobj);
+    }
+    obj["vertices"] = verts;
+    obj["fillColor"] = p->fillColor().name();
+    obj["strokeColor"] = p->strokeColor().name();
+    obj["lineWidth"] = p->lineWidth();
+    obj["lineStyle"] = static_cast<int>(p->lineStyle());
+    obj["lineCap"] = static_cast<int>(p->lineCap());
+    obj["lineJoin"] = static_cast<int>(p->lineJoin());
+    obj["fillPattern"] = static_cast<int>(p->fillPattern());
+    obj["opacity"] = p->opacity();
+    obj["rotation"] = p->rotation();
+    obj["scale"] = p->scale();
+    obj["defaultCornerRadius"] = p->defaultCornerRadius();
+    return obj;
+}
+
+QJsonObject serializeCurve(Curve *c) {
+    QJsonObject obj;
+    QJsonArray pts;
+    for (const QPointF &pt : c->controlPoints()) {
+        QJsonObject v;
+        v["x"] = pt.x();
+        v["y"] = pt.y();
+        pts.append(v);
+    }
+    obj["controlPoints"] = pts;
+    obj["curveType"] = static_cast<int>(c->curveType());
+    obj["tension"] = c->tension();
+    obj["color"] = c->color().name();
+    obj["lineWidth"] = c->lineWidth();
+    obj["lineStyle"] = static_cast<int>(c->lineStyle());
+    obj["lineCap"] = static_cast<int>(c->lineCap());
+    obj["lineJoin"] = static_cast<int>(c->lineJoin());
+    obj["closed"] = c->isClosed();
+    obj["rotation"] = c->rotation();
+    obj["scale"] = c->scale();
+    return obj;
+}
+
+QJsonObject serializeEllipse(Ellipse *e) {
+    QJsonObject obj;
+    obj["centerX"] = e->center().x();
+    obj["centerY"] = e->center().y();
+    obj["radiusX"] = e->radiusX();
+    obj["radiusY"] = e->radiusY();
+    obj["rotation"] = e->rotation();
+    obj["scale"] = e->scale();
+    obj["fillColor"] = e->fillColor().name();
+    obj["strokeColor"] = e->strokeColor().name();
+    obj["lineWidth"] = e->lineWidth();
+    obj["lineStyle"] = static_cast<int>(e->lineStyle());
+    obj["lineCap"] = static_cast<int>(e->lineCap());
+    obj["lineJoin"] = static_cast<int>(e->lineJoin());
+    obj["fillPattern"] = static_cast<int>(e->fillPattern());
+    obj["opacity"] = e->opacity();
+    return obj;
+}
+
+void deserializeToPoint(Point *p, const QJsonObject &obj) {
+    p->setName(obj["name"].toString());
+    p->setPos(QPointF(obj["x"].toDouble(), obj["y"].toDouble()));
+    p->setColor(QColor(obj["color"].toString()));
+    p->setRadius(obj["radius"].toDouble(2.0));
+    p->setVisible(obj["visible"].toBool(true));
+}
+
+void deserializeToLine(Line *l, const QJsonObject &obj) {
+    l->setStartPos(QPointF(obj["startX"].toDouble(), obj["startY"].toDouble()));
+    l->setEndPos(QPointF(obj["endX"].toDouble(), obj["endY"].toDouble()));
+    l->setColor(QColor(obj["color"].toString()));
+    l->setLineWidth(obj["lineWidth"].toDouble(0.8));
+    l->setLineStyle(static_cast<LineStyle>(obj["lineStyle"].toInt(0)));
+    l->setLineCap(static_cast<LineCap>(obj["lineCap"].toInt(0)));
+    l->setLineJoin(static_cast<LineJoin>(obj["lineJoin"].toInt(0)));
+    l->setCornerRadius(obj["cornerRadius"].toDouble());
+    l->setRotation(obj["rotation"].toDouble(0.0));
+    l->setScale(obj["scale"].toDouble(1.0));
+}
+
+void deserializeToPolygon(Polygon *p, const QJsonObject &obj) {
+    p->clear();
+    for (const QJsonValue &vv : obj["vertices"].toArray()) {
+        QJsonObject pt = vv.toObject();
+        p->addVertex(QPointF(pt["x"].toDouble(), pt["y"].toDouble()),
+                    pt["cornerRadius"].toDouble(0.0));
+    }
+    p->setFillColor(QColor(obj["fillColor"].toString()));
+    p->setStrokeColor(QColor(obj["strokeColor"].toString()));
+    p->setLineWidth(obj["lineWidth"].toDouble(0.8));
+    p->setLineStyle(static_cast<LineStyle>(obj["lineStyle"].toInt(0)));
+    p->setLineCap(static_cast<LineCap>(obj["lineCap"].toInt(0)));
+    p->setLineJoin(static_cast<LineJoin>(obj["lineJoin"].toInt(0)));
+    p->setFillPattern(static_cast<FillPattern>(obj["fillPattern"].toInt(1)));
+    p->setOpacity(obj["opacity"].toDouble(1.0));
+    p->setRotation(obj["rotation"].toDouble(0.0));
+    p->setScale(obj["scale"].toDouble(1.0));
+    p->setDefaultCornerRadius(obj["defaultCornerRadius"].toDouble(0.0));
+}
+
+void deserializeToCurve(Curve *c, const QJsonObject &obj) {
+    c->clear();
+    for (const QJsonValue &vv : obj["controlPoints"].toArray()) {
+        QJsonObject pt = vv.toObject();
+        c->addControlPoint(QPointF(pt["x"].toDouble(), pt["y"].toDouble()));
+    }
+    c->setCurveType(static_cast<Curve::CurveType>(obj["curveType"].toInt()));
+    c->setTension(obj["tension"].toDouble(0.5));
+    c->setColor(QColor(obj["color"].toString()));
+    c->setLineWidth(obj["lineWidth"].toDouble(0.8));
+    c->setLineStyle(static_cast<LineStyle>(obj["lineStyle"].toInt(0)));
+    c->setLineCap(static_cast<LineCap>(obj["lineCap"].toInt(0)));
+    c->setLineJoin(static_cast<LineJoin>(obj["lineJoin"].toInt(0)));
+    c->setClosed(obj["closed"].toBool());
+    c->setRotation(obj["rotation"].toDouble(0.0));
+    c->setScale(obj["scale"].toDouble(1.0));
+}
+
+void deserializeToEllipse(Ellipse *e, const QJsonObject &obj) {
+    e->setCenter(QPointF(obj["centerX"].toDouble(), obj["centerY"].toDouble()));
+    e->setRadiusX(obj["radiusX"].toDouble(1.0));
+    e->setRadiusY(obj["radiusY"].toDouble(1.0));
+    e->setRotation(obj["rotation"].toDouble(0.0));
+    e->setScale(obj["scale"].toDouble(1.0));
+    e->setFillColor(QColor(obj["fillColor"].toString()));
+    e->setStrokeColor(QColor(obj["strokeColor"].toString()));
+    e->setLineWidth(obj["lineWidth"].toDouble(0.8));
+    e->setLineStyle(static_cast<LineStyle>(obj["lineStyle"].toInt(0)));
+    e->setLineCap(static_cast<LineCap>(obj["lineCap"].toInt(0)));
+    e->setLineJoin(static_cast<LineJoin>(obj["lineJoin"].toInt(0)));
+    e->setFillPattern(static_cast<FillPattern>(obj["fillPattern"].toInt(1)));
+    e->setOpacity(obj["opacity"].toDouble(1.0));
+}
+
+} // anonymous namespace
+
+void Canvas::copySelected() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    if (selected.isEmpty()) return;
+
+    // Clear previous clipboard
+    m_clipboardPoints = QJsonArray();
+    m_clipboardLines = QJsonArray();
+    m_clipboardPolygons = QJsonArray();
+    m_clipboardCurves = QJsonArray();
+    m_clipboardEllipses = QJsonArray();
+
+    // Calculate bounding rect center for paste offset
+    QRectF bounds;
+    bool first = true;
+
+    for (QGraphicsItem *item : selected) {
+        QRectF itemBounds = item->boundingRect();
+        itemBounds.translate(item->pos());
+        if (first) {
+            bounds = itemBounds;
+            first = false;
+        } else {
+            bounds = bounds.united(itemBounds);
+        }
+
+        if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            m_clipboardPoints.append(serializePoint(pi->point()));
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            m_clipboardLines.append(serializeLine(li->line()));
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            m_clipboardPolygons.append(serializePolygon(pi->polygon()));
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            m_clipboardCurves.append(serializeCurve(ci->curve()));
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            m_clipboardEllipses.append(serializeEllipse(ei->ellipse()));
+        }
+    }
+
+    m_clipboardCenter = bounds.center();
+    emit statusMessage(QString("Copied %1 item(s)").arg(selected.size()));
+}
+
+void Canvas::cutSelected() {
+    copySelected();
+    deleteSelected();
+}
+
+void Canvas::paste() {
+    if (m_clipboardPoints.isEmpty() && m_clipboardLines.isEmpty() &&
+        m_clipboardPolygons.isEmpty() && m_clipboardCurves.isEmpty() &&
+        m_clipboardEllipses.isEmpty()) {
+        return;
+    }
+
+    // Clear selection
+    clearSelection();
+
+    // Offset for paste (0.5 units down and right)
+    QPointF offset(0.5, -0.5);
+
+    int count = 0;
+
+    // Paste points
+    for (const QJsonValue &v : m_clipboardPoints) {
+        QJsonObject obj = v.toObject();
+        Point *p = m_document->addPoint(QPointF(
+            obj["x"].toDouble() + offset.x(),
+            obj["y"].toDouble() + offset.y()
+        ));
+        deserializeToPoint(p, obj);
+        p->setPos(p->pos() + offset);  // Apply offset after restore
+        count++;
+
+        // Select newly pasted item
+        if (m_pointItems.contains(p)) {
+            m_pointItems[p]->setSelected(true);
+        }
+    }
+
+    // Paste lines
+    for (const QJsonValue &v : m_clipboardLines) {
+        QJsonObject obj = v.toObject();
+        Line *l = m_document->addLine(
+            QPointF(obj["startX"].toDouble() + offset.x(), obj["startY"].toDouble() + offset.y()),
+            QPointF(obj["endX"].toDouble() + offset.x(), obj["endY"].toDouble() + offset.y())
+        );
+        deserializeToLine(l, obj);
+        l->setStartPos(l->startPos() + offset);
+        l->setEndPos(l->endPos() + offset);
+        count++;
+
+        if (m_lineItems.contains(l)) {
+            m_lineItems[l]->setSelected(true);
+        }
+    }
+
+    // Paste polygons
+    for (const QJsonValue &v : m_clipboardPolygons) {
+        QJsonObject obj = v.toObject();
+        Polygon *p = m_document->addPolygon();
+        deserializeToPolygon(p, obj);
+        // Offset all vertices
+        for (int i = 0; i < p->vertexCount(); ++i) {
+            p->setVertexPosition(i, p->vertices()[i].pos + offset);
+        }
+        count++;
+
+        if (m_polygonItems.contains(p)) {
+            m_polygonItems[p]->setSelected(true);
+        }
+    }
+
+    // Paste curves
+    for (const QJsonValue &v : m_clipboardCurves) {
+        QJsonObject obj = v.toObject();
+        Curve *c = m_document->addCurve();
+        deserializeToCurve(c, obj);
+        // Offset all control points
+        for (int i = 0; i < c->controlPointCount(); ++i) {
+            c->setControlPoint(i, c->controlPoints()[i] + offset);
+        }
+        count++;
+
+        if (m_curveItems.contains(c)) {
+            m_curveItems[c]->setSelected(true);
+        }
+    }
+
+    // Paste ellipses
+    for (const QJsonValue &v : m_clipboardEllipses) {
+        QJsonObject obj = v.toObject();
+        Ellipse *e = m_document->addEllipse();
+        deserializeToEllipse(e, obj);
+        e->setCenter(e->center() + offset);
+        count++;
+
+        if (m_ellipseItems.contains(e)) {
+            m_ellipseItems[e]->setSelected(true);
+        }
+    }
+
+    // Update clipboard center for next paste
+    m_clipboardCenter += offset;
+
+    emit statusMessage(QString("Pasted %1 item(s)").arg(count));
+}
+
+void Canvas::duplicate() {
+    copySelected();
+    paste();
 }
 
 void Canvas::setGridVisible(bool visible) {

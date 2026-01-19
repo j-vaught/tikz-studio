@@ -25,6 +25,7 @@ set(SOURCES
     src/data/curve.cpp
     src/data/ellipse.cpp
     src/data/document.cpp
+    src/data/commands.cpp
     src/gui/mainwindow.cpp
     src/gui/canvas.cpp
     src/gui/canvasview.cpp
@@ -46,6 +47,7 @@ set(HEADERS
     src/data/curve.h
     src/data/ellipse.h
     src/data/document.h
+    src/data/commands.h
     src/gui/mainwindow.h
     src/gui/canvas.h
     src/gui/canvasview.h

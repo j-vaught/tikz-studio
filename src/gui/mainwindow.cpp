@@ -280,10 +280,42 @@ void MainWindow::setupMenus() {
 
     // Edit menu
     QMenu *editMenu = menuBar()->addMenu("&Edit");
-    editMenu->addAction("&Undo", m_document->undoStack(), &QUndoStack::undo, QKeySequence::Undo);
-    editMenu->addAction("&Redo", m_document->undoStack(), &QUndoStack::redo, QKeySequence::Redo);
+
+    QAction *undoAction = editMenu->addAction("&Undo");
+    undoAction->setShortcut(QKeySequence::Undo);
+    connect(undoAction, &QAction::triggered, m_document->undoStack(), &QUndoStack::undo);
+
+    QAction *redoAction = editMenu->addAction("&Redo");
+    redoAction->setShortcut(QKeySequence::Redo);
+    connect(redoAction, &QAction::triggered, m_document->undoStack(), &QUndoStack::redo);
+
     editMenu->addSeparator();
-    editMenu->addAction("&Delete", m_canvas, &Canvas::deleteSelected, QKeySequence::Delete);
+
+    QAction *cutAction = editMenu->addAction("Cu&t");
+    cutAction->setShortcut(QKeySequence::Cut);
+    connect(cutAction, &QAction::triggered, m_canvas, &Canvas::cutSelected);
+
+    QAction *copyAction = editMenu->addAction("&Copy");
+    copyAction->setShortcut(QKeySequence::Copy);
+    connect(copyAction, &QAction::triggered, m_canvas, &Canvas::copySelected);
+
+    QAction *pasteAction = editMenu->addAction("&Paste");
+    pasteAction->setShortcut(QKeySequence::Paste);
+    connect(pasteAction, &QAction::triggered, m_canvas, &Canvas::paste);
+
+    QAction *duplicateAction = editMenu->addAction("&Duplicate");
+    duplicateAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_D));
+    connect(duplicateAction, &QAction::triggered, m_canvas, &Canvas::duplicate);
+
+    editMenu->addSeparator();
+
+    QAction *selectAllAction = editMenu->addAction("Select &All");
+    selectAllAction->setShortcut(QKeySequence::SelectAll);
+    connect(selectAllAction, &QAction::triggered, m_canvas, &Canvas::selectAll);
+
+    QAction *deleteAction = editMenu->addAction("De&lete");
+    deleteAction->setShortcut(QKeySequence::Delete);
+    connect(deleteAction, &QAction::triggered, m_canvas, &Canvas::deleteSelected);
 
     // View menu
     QMenu *viewMenu = menuBar()->addMenu("&View");
