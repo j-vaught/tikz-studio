@@ -5,7 +5,16 @@
 #include "toolpalette.h"
 #include "colorpalette.h"
 #include "propertiespanel.h"
+#include "contexttoolbar.h"
 #include "common.h"
+#include "line.h"
+#include "polygon.h"
+#include "curve.h"
+#include "ellipse.h"
+#include "lineitem.h"
+#include "polygonitem.h"
+#include "curveitem.h"
+#include "ellipseitem.h"
 
 #include <QMenuBar>
 #include <QToolBar>
@@ -334,6 +343,27 @@ void MainWindow::setupToolbars() {
     connect(m_ngonSidesSpin, QOverload<int>::of(&QSpinBox::valueChanged),
             m_canvas, &Canvas::setRegularPolygonSides);
 
+    // Context toolbar (properties for selected items)
+    m_contextToolbar = new ContextToolbar(this);
+    addToolBarBreak(Qt::TopToolBarArea);
+    addToolBar(Qt::TopToolBarArea, m_contextToolbar);
+
+    // Connect context toolbar signals
+    connect(m_contextToolbar, &ContextToolbar::lineWidthChanged,
+            this, &MainWindow::onLineWidthChanged);
+    connect(m_contextToolbar, &ContextToolbar::strokeColorChanged,
+            this, &MainWindow::onStrokeColorChanged);
+    connect(m_contextToolbar, &ContextToolbar::fillColorChanged,
+            this, &MainWindow::onFillColorChanged);
+    connect(m_contextToolbar, &ContextToolbar::lineStyleChanged,
+            this, [this](LineStyle style) { onLineStyleChanged(static_cast<int>(style)); });
+    connect(m_contextToolbar, &ContextToolbar::fillPatternChanged,
+            this, [this](FillPattern pattern) { onFillPatternChanged(static_cast<int>(pattern)); });
+    connect(m_contextToolbar, &ContextToolbar::rotationChanged,
+            this, &MainWindow::onRotationChanged);
+    connect(m_contextToolbar, &ContextToolbar::scaleChanged,
+            this, &MainWindow::onScaleChanged);
+
     // Tool palette on the left
     addToolBar(Qt::LeftToolBarArea, m_toolPalette);
 }
@@ -637,9 +667,78 @@ void MainWindow::updateStatusBar() {
 }
 
 void MainWindow::onSelectionChanged() {
-    m_propertiesPanel->setSelection(m_canvas->selectedItems());
+    QList<QGraphicsItem*> items = m_canvas->selectedItems();
+    m_propertiesPanel->setSelection(items);
+    m_contextToolbar->updateForSelection(items);
 }
 
 void MainWindow::onStatusMessage(const QString &msg) {
     m_statusLabel->setText(msg);
+}
+
+void MainWindow::onLineWidthChanged(double width) {
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            li->line()->setLineWidth(width);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setLineWidth(width);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            ci->curve()->setLineWidth(width);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setLineWidth(width);
+        }
+    }
+}
+
+void MainWindow::onStrokeColorChanged(const QColor &color) {
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            li->line()->setColor(color);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setStrokeColor(color);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            ci->curve()->setColor(color);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setStrokeColor(color);
+        }
+    }
+}
+
+void MainWindow::onFillColorChanged(const QColor &color) {
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setFillColor(color);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setFillColor(color);
+        }
+    }
+}
+
+void MainWindow::onLineStyleChanged(int style) {
+    bool dashed = (style != static_cast<int>(LineStyle::Solid));
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            li->line()->setDashed(dashed);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            ci->curve()->setDashed(dashed);
+        }
+    }
+}
+
+void MainWindow::onFillPatternChanged(int pattern) {
+    // TODO: Implement fill pattern support in data models
+    Q_UNUSED(pattern);
+}
+
+void MainWindow::onRotationChanged(double angle) {
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setRotation(angle);
+        }
+    }
+}
+
+void MainWindow::onScaleChanged(double scale) {
+    // TODO: Implement scale support - would need to modify shape dimensions
+    Q_UNUSED(scale);
 }

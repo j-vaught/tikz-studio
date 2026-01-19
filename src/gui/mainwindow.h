@@ -9,6 +9,7 @@ class CanvasView;
 class ToolPalette;
 class ColorPalette;
 class PropertiesPanel;
+class ContextToolbar;
 class QTextEdit;
 class QDockWidget;
 class QLabel;
@@ -48,6 +49,15 @@ private slots:
     void onSelectionChanged();
     void onStatusMessage(const QString &msg);
 
+    // Context toolbar slots
+    void onLineWidthChanged(double width);
+    void onStrokeColorChanged(const QColor &color);
+    void onFillColorChanged(const QColor &color);
+    void onLineStyleChanged(int style);
+    void onFillPatternChanged(int pattern);
+    void onRotationChanged(double angle);
+    void onScaleChanged(double scale);
+
 private:
     void setupMenus();
     void setupToolbars();
@@ -60,6 +70,7 @@ private:
     ToolPalette *m_toolPalette;
     ColorPalette *m_colorPalette;
     PropertiesPanel *m_propertiesPanel;
+    ContextToolbar *m_contextToolbar;
 
     QTextEdit *m_tikzCodeView;
     QDockWidget *m_codeDock;

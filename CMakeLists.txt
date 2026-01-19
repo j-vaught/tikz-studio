@@ -36,6 +36,7 @@ set(SOURCES
     src/gui/curveitem.cpp
     src/gui/ellipseitem.cpp
     src/gui/propertiespanel.cpp
+    src/gui/contexttoolbar.cpp
 )
 
 set(HEADERS
@@ -56,6 +57,7 @@ set(HEADERS
     src/gui/curveitem.h
     src/gui/ellipseitem.h
     src/gui/propertiespanel.h
+    src/gui/contexttoolbar.h
     src/common.h
 )
 

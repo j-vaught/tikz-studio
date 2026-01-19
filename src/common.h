@@ -72,4 +72,25 @@ enum class Tool {
     RegularPolygon
 };
 
+// Line/stroke styles
+enum class LineStyle {
+    Solid,
+    Dashed,
+    Dotted,
+    DashDot,
+    DashDotDot
+};
+
+// Fill patterns
+enum class FillPattern {
+    None,
+    Solid,
+    HorizontalLines,
+    VerticalLines,
+    CrossHatch,
+    DiagonalLines,
+    DiagonalCrossHatch,
+    Dots
+};
+
 #endif // COMMON_H
