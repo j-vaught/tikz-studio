@@ -1,25 +1,44 @@
 # TikZ Studio - Proposed Features
 
-A curated list of features to enhance TikZ Studio while maintaining simplicity for beginners and power for advanced users.
+## Product Vision
+
+TikZ Studio is developed in phases, each potentially a standalone product:
+
+| Phase | Product | Purpose |
+|-------|---------|---------|
+| **Part 1** | TikZ Studio (General Diagrams) | Draw geometric shapes, export TikZ code |
+| **Part 2** | TikZ Studio (Diagram Generator) | Flowcharts, block diagrams, labeled arrows |
+| **Part 3** | TikZ Studio (Electrical) | Circuit diagrams with component library |
+
+**This document focuses on Part 1 features only.**
+
+Parts 2 and 3 will be forked from Part 1 when ready, adding specialized tools.
+
+---
 
 ## Design Philosophy
 
 - **Progressive disclosure**: Basic tools visible, advanced features discoverable
 - **Keyboard-optional**: Everything works with mouse, keyboard shortcuts accelerate
-- **Non-modal**: Avoid popups and dialogs where possible; use inline editing
+- **Non-modal**: Avoid popups; use inline editing
 - **Familiar patterns**: Follow conventions from PowerPoint, Illustrator, Figma
+- **Standalone scope**: Part 1 works completely on its own for general drawing
 
 ---
 
-## Phase 1: Essential Editing
+## Part 1 Features (General Diagrams)
 
-Core features that users expect from any drawing application.
+### Tier 1: Critical (Must Have)
 
-### 1.1 Undo/Redo System
+These are blocking issues or expected baseline functionality.
+
+---
+
+#### 1.1 Undo/Redo System
 
 **Priority**: Critical
 **Effort**: Medium
-**Inspiration**: Every application ever
+**Status**: Currently stubbed
 
 | Requirement | Details |
 |-------------|---------|
@@ -28,22 +47,22 @@ Core features that users expect from any drawing application.
 | Per-action granularity | Each shape creation, move, property change is one undo step |
 | Undo after save | Preserve undo stack after saving |
 
-**Implementation**: Use Qt's `QUndoStack` and `QUndoCommand` pattern. Create command classes for:
-- `CreateShapeCommand`
-- `DeleteShapeCommand`
-- `MoveCommand`
-- `PropertyChangeCommand`
-- `GroupCommand` / `UngroupCommand`
+**Implementation**: Use Qt's `QUndoStack` and `QUndoCommand` pattern.
 
-**UI**: Optional Edit menu entries. No need for visible undo history panel initially.
+**Commands to implement**:
+- `CreateShapeCommand` (point, line, polygon, curve, ellipse)
+- `DeleteShapeCommand`
+- `MoveCommand` (single or multi-shape)
+- `PropertyChangeCommand` (color, line width, etc.)
+- `TransformCommand` (rotate, scale, flip)
+- `GroupCommand` / `UngroupCommand`
 
 ---
 
-### 1.2 Copy, Cut, Paste, Duplicate
+#### 1.2 Copy, Cut, Paste, Duplicate
 
 **Priority**: Critical
 **Effort**: Low
-**Inspiration**: Universal
 
 | Feature | Shortcut | Behavior |
 |---------|----------|----------|
@@ -53,53 +72,39 @@ Core features that users expect from any drawing application.
 | Duplicate | Ctrl+D | Clone selection with small offset (0.25, -0.25) |
 | Paste in Place | Ctrl+Shift+V | Paste at exact original position |
 
-**Clipboard format**: Internal object references. Optionally also copy TikZ code to system clipboard for pasting into LaTeX editors.
+**Bonus**: Also copy TikZ code to system clipboard for pasting into LaTeX editors.
 
 ---
 
-### 1.3 Arrow Heads
+#### 1.3 Select All
 
-**Priority**: High
-**Effort**: Low
-**Inspiration**: TikZiT, Illustrator
-
-Add arrow head/tail options to lines and curves.
-
-| Arrow Style | TikZ Equivalent |
-|-------------|-----------------|
-| None | (default) |
-| Arrow | `->` or `<-` |
-| Double Arrow | `<->` |
-| Stealth | `-stealth` |
-| Latex | `-latex` |
-| Circle | `-o` |
-| Bar | `-|` |
-
-**UI**: Add dropdown or icon buttons to context toolbar when line/curve selected.
-
-**Data Model**: Add `ArrowHead` and `ArrowTail` enums to `Line` and `Curve` classes.
-
----
-
-### 1.4 Select All
-
-**Priority**: High
+**Priority**: Critical
 **Effort**: Minimal
 **Shortcut**: Ctrl+A
 
-Select all shapes on canvas. Simple but essential.
+---
+
+#### 1.4 Delete Selected
+
+**Priority**: Critical
+**Effort**: Minimal
+**Shortcut**: Delete or Backspace
+
+Confirm this works reliably. Add to Edit menu.
 
 ---
 
-## Phase 2: Organization & Grouping
+### Tier 2: High Priority (Core Experience)
 
-Features for managing complex diagrams.
+Features that significantly improve usability.
 
-### 2.1 Grouping
+---
+
+#### 2.1 Grouping
 
 **Priority**: High
 **Effort**: Medium
-**Inspiration**: PowerPoint, Illustrator, Figma
+**Inspiration**: PowerPoint, Illustrator
 
 | Feature | Shortcut | Behavior |
 |---------|----------|----------|
@@ -112,54 +117,71 @@ Features for managing complex diagrams.
 - Groups move, scale, and rotate as one unit
 - Groups can be nested (groups within groups)
 - Selection shows single bounding box around group
-- Properties panel shows "Mixed" for differing values
 
 **TikZ Output**:
 ```latex
-\begin{scope}[shift={(2,3)}, rotate=45]
+\begin{scope}[shift={(2,3)}, rotate=45, scale=0.8]
   % child shapes here
 \end{scope}
 ```
 
 ---
 
-### 2.2 Layers Panel
+#### 2.2 Align Tools
 
-**Priority**: Medium
-**Effort**: Medium
-**Inspiration**: Photoshop, Illustrator
+**Priority**: High
+**Effort**: Low
+**Inspiration**: PowerPoint, Figma
 
-A simple layers panel in a dock widget:
+Align selected shapes relative to selection bounding box:
 
-```
-┌─ Layers ─────────────────┐
-│ [+] [-] [↑] [↓]          │
-├──────────────────────────┤
-│ 👁 🔒 Background          │
-│ 👁 🔒 Grid Lines          │
-│ 👁    Annotations         │
-│ 👁    Main Diagram     ◄──│ (selected)
-└──────────────────────────┘
-```
+| Alignment | Behavior |
+|-----------|----------|
+| Align Left | Left edges match leftmost shape |
+| Align Center H | Horizontal centers aligned |
+| Align Right | Right edges match rightmost shape |
+| Align Top | Top edges match topmost shape |
+| Align Center V | Vertical centers aligned |
+| Align Bottom | Bottom edges match bottommost shape |
 
-| Icon | Meaning |
-|------|---------|
-| 👁 | Visibility toggle |
-| 🔒 | Lock toggle (prevent editing) |
-
-**Features**:
-- Drag to reorder layers
-- Double-click to rename
-- New shapes added to selected layer
-- Layers map to TikZ `scope` or `pgfonlayer`
-
-**Keep it simple**: No opacity per layer initially. No blend modes.
+**UI**: Toolbar dropdown or Arrange menu. Only enabled when 2+ shapes selected.
 
 ---
 
-### 2.3 Z-Ordering
+#### 2.3 Distribute Tools
 
-**Priority**: Medium
+**Priority**: High
+**Effort**: Low
+**Inspiration**: PowerPoint, Figma
+
+Evenly space 3+ selected shapes:
+
+| Distribution | Behavior |
+|--------------|----------|
+| Distribute Horizontally | Equal horizontal gaps between shapes |
+| Distribute Vertically | Equal vertical gaps between shapes |
+
+Only enabled when 3+ shapes selected.
+
+---
+
+#### 2.4 Flip Operations
+
+**Priority**: High
+**Effort**: Minimal
+
+| Action | Shortcut | Behavior |
+|--------|----------|----------|
+| Flip Horizontal | H (with selection) | Mirror across vertical axis |
+| Flip Vertical | V (with selection) | Mirror across horizontal axis |
+
+**Implementation**: Negate x or y coordinates relative to selection center.
+
+---
+
+#### 2.5 Z-Ordering
+
+**Priority**: High
 **Effort**: Low
 **Inspiration**: PowerPoint
 
@@ -170,88 +192,81 @@ A simple layers panel in a dock widget:
 | Send Backward | Ctrl+[ | Arrange → Send Backward |
 | Send to Back | Ctrl+Shift+[ | Arrange → Send to Back |
 
-Changes draw order within layer. Affects TikZ output order.
+Affects draw order and TikZ output order.
 
 ---
 
-## Phase 3: Alignment & Distribution
+### Tier 3: Medium Priority (Polish)
 
-Precision layout tools.
-
-### 3.1 Align Tools
-
-**Priority**: High
-**Effort**: Low
-**Inspiration**: PowerPoint, Figma
-
-Align selected shapes relative to selection bounding box:
-
-| Alignment | Icon | Behavior |
-|-----------|------|----------|
-| Align Left | `[│· · ]` | Left edges aligned |
-| Align Center H | `[ · │ · ]` | Horizontal centers aligned |
-| Align Right | `[ · ·│]` | Right edges aligned |
-| Align Top | Top edge aligned |
-| Align Center V | Vertical centers aligned |
-| Align Bottom | Bottom edges aligned |
-
-**UI**: Toolbar buttons or Arrange menu. Only enabled when 2+ shapes selected.
-
-**Option**: Align to selection vs. align to canvas. Default to selection.
+Features that improve workflow but aren't blocking.
 
 ---
 
-### 3.2 Distribute Tools
+#### 3.1 Eyedropper Tool
 
 **Priority**: Medium
 **Effort**: Low
-**Inspiration**: PowerPoint, Figma
+**Inspiration**: Photoshop
 
-Evenly space 3+ selected shapes:
+| Shortcut | Behavior |
+|----------|----------|
+| I | Activate eyedropper tool |
+| Alt+Click (any tool) | Sample color under cursor |
 
-| Distribution | Behavior |
-|--------------|----------|
-| Distribute Horizontally | Equal horizontal spacing between shapes |
-| Distribute Vertically | Equal vertical spacing between shapes |
-
-**UI**: Same location as align tools. Only enabled when 3+ shapes selected.
+**Behavior**:
+- Click on shape: Sample its fill color
+- Shift+Click: Sample its stroke color
+- Set as active color in palette
+- Return to previous tool after sampling
 
 ---
 
-### 3.3 Smart Guides
+#### 3.2 Format Painter
+
+**Priority**: Medium
+**Effort**: Low
+**Inspiration**: PowerPoint, Word
+
+| Shortcut | Behavior |
+|----------|----------|
+| Ctrl+Shift+C | Copy formatting of selected shape |
+| Ctrl+Shift+V | Apply formatting to selected shapes |
+
+**Copied properties**:
+- Fill color and pattern
+- Stroke color, width, style
+- Line cap and join
+- Opacity
+- Corner radius
+
+---
+
+#### 3.3 Style Presets
 
 **Priority**: Medium
 **Effort**: Medium
-**Inspiration**: Figma, Keynote
+**Inspiration**: TikZiT, Figma
 
-While dragging shapes, show guides when:
-- Edges align with other shapes
-- Centers align with other shapes
-- Equal spacing is achieved
+Save and reuse style combinations:
 
-**Visual**: Thin magenta lines (standard guide color)
+```
+┌─ Styles ─────────────────┐
+│ [+] [−]                  │
+├──────────────────────────┤
+│ ■ Default                │
+│ ■ Highlighted            │
+│ ■ Dashed Outline         │
+│ ■ Thick Red              │
+└──────────────────────────┘
+```
 
-**Behavior**: Optional snap to guides. Toggle with View menu or Alt key to temporarily disable.
-
----
-
-### 3.4 Manual Guides
-
-**Priority**: Low
-**Effort**: Medium
-**Inspiration**: Photoshop, Illustrator
-
-Drag from rulers to create guide lines:
-- Horizontal guides from top ruler
-- Vertical guides from left ruler
-- Drag guide off canvas to delete
-- Guides are document-specific, not exported to TikZ
+- Click to apply style to selection
+- Right-click → Update Style from Selection
+- Styles saved with document
 
 ---
 
-## Phase 4: Transform Tools
-
-### 4.1 Transform Handles
+#### 3.4 Transform Handles
 
 **Priority**: Medium
 **Effort**: Medium
@@ -269,22 +284,7 @@ When shape selected, show:
 
 ---
 
-### 4.2 Flip Operations
-
-**Priority**: High
-**Effort**: Minimal
-**Inspiration**: Every drawing app
-
-| Action | Shortcut | Behavior |
-|--------|----------|----------|
-| Flip Horizontal | H (when selected) | Mirror across vertical axis |
-| Flip Vertical | V (when selected) | Mirror across horizontal axis |
-
-**Implementation**: Negate x or y coordinates relative to selection center.
-
----
-
-### 4.3 Rotate 90°
+#### 3.5 Rotate 90°
 
 **Priority**: Medium
 **Effort**: Minimal
@@ -294,242 +294,93 @@ When shape selected, show:
 | Rotate 90° CW | Ctrl+R |
 | Rotate 90° CCW | Ctrl+Shift+R |
 
-Complements free rotation with precise increments.
-
 ---
 
-### 4.4 Direct Selection Tool
+#### 3.6 Direct Selection Tool
 
 **Priority**: Medium
 **Effort**: Medium
 **Inspiration**: Illustrator
 
-A secondary selection mode (A key) that selects individual vertices:
+Secondary selection mode (A key) that selects individual vertices:
 - Click vertex to select it
 - Drag vertex to move it
 - Works on polygons, curves, lines
 - Shift+click to add to selection
 
-**Visual**: Show vertices as small squares. Selected vertices filled, others hollow.
+**Visual**: Vertices as small squares. Selected = filled, unselected = hollow.
 
 ---
 
-## Phase 5: Color & Style Tools
-
-### 5.1 Eyedropper Tool
-
-**Priority**: Medium
-**Effort**: Low
-**Inspiration**: Photoshop, Illustrator
-
-| Shortcut | Behavior |
-|----------|----------|
-| I | Activate eyedropper tool |
-| Alt+Click (any tool) | Sample color under cursor |
-
-**Behavior**:
-- Click on shape: Sample its fill color
-- Shift+Click: Sample its stroke color
-- Set as active color in palette
-- Return to previous tool after sampling
-
----
-
-### 5.2 Format Painter
-
-**Priority**: Medium
-**Effort**: Low
-**Inspiration**: PowerPoint, Word
-
-| Shortcut | Behavior |
-|----------|----------|
-| Ctrl+Shift+C | Copy formatting of selected shape |
-| Ctrl+Shift+V | Apply formatting to selected shapes |
-
-**Copied properties**:
-- Fill color and pattern
-- Stroke color, width, style
-- Line cap and join
-- Opacity
-
----
-
-### 5.3 Style Presets
+#### 3.7 Smart Guides
 
 **Priority**: Medium
 **Effort**: Medium
-**Inspiration**: TikZiT, Figma
+**Inspiration**: Figma, Keynote
 
-Save and reuse style combinations:
+While dragging shapes, show guides when:
+- Edges align with other shapes
+- Centers align with other shapes
+- Equal spacing achieved
+
+**Visual**: Thin magenta/cyan lines. Optional snap.
+
+---
+
+#### 3.8 Layers Panel
+
+**Priority**: Medium
+**Effort**: Medium
+**Inspiration**: Photoshop
+
+Simple layers panel:
 
 ```
-┌─ Styles ─────────────────┐
-│ [+] [−]                  │
-├──────────────────────────┤
-│ ■ Default                │
-│ ■ Highlighted            │
-│ ■ Dashed Outline         │
-│ ■ Filled Blue            │
-│ ■ Arrow Line             │
+┌─ Layers ─────────────────┐
+│ 👁 🔒 Layer 3             │
+│ 👁    Layer 2          ◄──│
+│ 👁 🔒 Layer 1             │
 └──────────────────────────┘
 ```
 
-**Features**:
-- Click to apply style to selection
-- Right-click → Update Style from Selection
-- Styles saved with document
-- Optional: Global style library
-
-**Keep simple**: No live linking (changing style doesn't update existing shapes). Just one-time application.
+- Visibility toggle (eye icon)
+- Lock toggle (prevent editing)
+- Drag to reorder
+- Double-click to rename
 
 ---
 
-### 5.4 Gradient Fills
+### Tier 4: Lower Priority (Nice to Have)
 
-**Priority**: Low
-**Effort**: High
-**Inspiration**: Illustrator
-
-Support TikZ shading:
-- Linear gradient (two-color, angle)
-- Radial gradient (center, edge colors)
-
-**UI**: Gradient editor in properties panel when fill selected.
-
-**TikZ Output**: Use `\shade` command with `left color`, `right color`, etc.
-
-**Note**: TikZ gradient support is limited. May not be worth the complexity.
+Features that add value but can wait.
 
 ---
 
-## Phase 6: Advanced Drawing
+#### 4.1 SVG Export
 
-### 6.1 Bezier Curve Tool
-
-**Priority**: Medium
-**Effort**: High
-**Inspiration**: Illustrator, Inkscape
-
-A true pen tool for Bezier curves:
-- Click to add corner point
-- Click+drag to add smooth point with handles
-- Hold Alt to break handle symmetry
-
-**Current state**: TikZ Studio has smooth curves through points. This would add direct control point manipulation.
-
-**Complexity warning**: Bezier tools have a learning curve. Consider making this an "advanced" tool that's hidden by default.
-
----
-
-### 6.2 Boolean Operations
-
-**Priority**: Low
-**Effort**: High
-**Inspiration**: Illustrator, Figma
-
-Combine shapes:
-
-| Operation | Result |
-|-----------|--------|
-| Union | Combined outline of all shapes |
-| Subtract | First shape minus overlapping areas |
-| Intersect | Only overlapping areas |
-| Exclude | Non-overlapping areas only |
-
-**Note**: Complex to implement correctly. May require computational geometry library. Lower priority.
-
----
-
-### 6.3 Path Offset
-
-**Priority**: Low
+**Priority**: Lower
 **Effort**: Medium
-**Inspiration**: Illustrator
 
-Create a parallel path at specified distance:
-- Offset outside (expand)
-- Offset inside (contract)
+Export diagram as SVG for web, presentations.
 
-Useful for creating outlines and borders.
+**Implementation**: Qt's `QSvgGenerator`.
 
 ---
 
-## Phase 7: Interoperability
+#### 4.2 PNG Export
 
-### 7.1 TikZ Import
+**Priority**: Lower
+**Effort**: Low
 
-**Priority**: High
-**Effort**: High
-**Inspiration**: TikZiT
+Render canvas to PNG at configurable resolution.
 
-Parse existing TikZ code and convert to editable shapes:
-- Load `.tikz` files
-- Paste TikZ code to import
-- Round-trip editing (import → edit → export)
-
-**Scope**: Start with basic commands:
-- `\draw` paths
-- `\fill` and `\filldraw`
-- `\node` (as labeled points)
-- `\coordinate`
-- Basic options (color, line width)
-
-**Parser approach**: Could use regex for simple cases, or Bison/Flex for full TikZ grammar (complex).
+**Implementation**: Render `QGraphicsScene` to `QImage`.
 
 ---
 
-### 7.2 SVG Export
+#### 4.3 Grid Customization
 
-**Priority**: Medium
-**Effort**: Medium
-**Inspiration**: Inkscape
-
-Export diagram as SVG for use in web, presentations, etc.
-
-**Implementation**: Qt has SVG export via `QSvgGenerator`. Should be straightforward.
-
----
-
-### 7.3 PNG/PDF Export
-
-**Priority**: Medium
-**Effort**: Low (for PNG), Medium (for direct PDF)
-
-| Format | Method |
-|--------|--------|
-| PNG | Render QGraphicsScene to QImage |
-| PDF (via LaTeX) | Already implemented via compile |
-| PDF (direct) | QPrinter or QPdfWriter |
-
----
-
-### 7.4 Clipboard TikZ
-
-**Priority**: Medium
-**Effort**: Minimal
-
-When copying shapes, also place TikZ code in system clipboard. Allows pasting directly into LaTeX editor.
-
----
-
-## Phase 8: Quality of Life
-
-### 8.1 Measurement/Dimension Tool
-
-**Priority**: Low
-**Effort**: Medium
-**Inspiration**: CAD software, Figma
-
-Show distances between objects:
-- Hover between shapes to see spacing
-- Click to place permanent dimension annotation
-- Dimension lines export to TikZ using `\draw` with arrows and labels
-
----
-
-### 8.2 Grid Customization
-
-**Priority**: Low
+**Priority**: Lower
 **Effort**: Low
 
 Currently: Fixed 0.25 minor / 1.0 major grid.
@@ -541,232 +392,303 @@ Add preferences:
 
 ---
 
-### 8.3 Canvas Resize
+#### 4.4 Canvas/Bounds Resize
 
-**Priority**: Low
+**Priority**: Lower
 **Effort**: Low
-**Inspiration**: Photoshop
 
 Adjust the TikZ picture boundaries:
 - Fit to content
 - Add margin
-- Set explicit size
-- Affects `\begin{tikzpicture}[scale=...]` output
+- Set explicit dimensions
 
 ---
 
-### 8.4 Recent Files
+#### 4.5 Recent Files
 
-**Priority**: Low
+**Priority**: Lower
 **Effort**: Low
 
-Track recently opened files in File menu. Standard application feature.
+Track recently opened files in File menu.
 
 ---
 
-### 8.5 Preferences Dialog
+#### 4.6 Preferences Dialog
 
-**Priority**: Low
+**Priority**: Lower
 **Effort**: Medium
 
 Centralized settings:
 - Default colors
 - Grid settings
-- Keyboard shortcut customization
 - Auto-save interval
 - LaTeX compiler path
 
 ---
 
-### 8.6 Keyboard Shortcut Cheat Sheet
+#### 4.7 Keyboard Shortcut Reference
 
-**Priority**: Low
+**Priority**: Lower
 **Effort**: Minimal
 
-Help → Keyboard Shortcuts opens overlay or dialog showing all shortcuts.
+Help → Keyboard Shortcuts shows all shortcuts.
 
 ---
 
-## Phase 9: Labels & Text
+#### 4.8 Manual Guide Lines
 
-### 9.1 Text Tool
-
-**Priority**: High
+**Priority**: Lower
 **Effort**: Medium
-**Inspiration**: TikZiT, Illustrator
 
-Add text labels to diagrams:
-- Click to place text
-- Inline editing (type directly on canvas)
-- Basic formatting (bold, italic via markdown or LaTeX)
-
-**TikZ Output**:
-```latex
-\node at (2,3) {Label text};
-\node[above] at (1,1) {$x^2$};  % LaTeX math supported
-```
-
-**Keep simple**: No rich text editor. Just single-line or simple multi-line text.
+Drag from rulers to create alignment guides.
 
 ---
 
-### 9.2 Label Positions
+#### 4.9 Bezier Handle Editing
 
-**Priority**: Medium
-**Effort**: Low
+**Priority**: Lower
+**Effort**: High
 
-For point labels, support positioning:
-- Above, below, left, right
-- Above left, above right, below left, below right
+Direct manipulation of Bezier control points on curves.
 
-Maps to TikZ node anchors.
+Complex to implement. Current smooth curves may be sufficient for Part 1.
 
 ---
 
-### 9.3 Shape Labels
+#### 4.10 Boolean Operations
 
-**Priority**: Medium
-**Effort**: Low
+**Priority**: Lower
+**Effort**: High
 
-Add centered label inside shapes (polygons, ellipses, rectangles):
-- Optional label field in properties
-- Rendered at shape centroid
+Union, subtract, intersect shapes.
 
----
-
-## Feature Comparison Matrix
-
-| Feature | Beginner Friendly | Power User Value | Effort | Priority |
-|---------|-------------------|------------------|--------|----------|
-| Undo/Redo | ★★★ | ★★★ | Medium | Critical |
-| Copy/Paste | ★★★ | ★★★ | Low | Critical |
-| Arrow Heads | ★★★ | ★★★ | Low | High |
-| Grouping | ★★☆ | ★★★ | Medium | High |
-| Align/Distribute | ★★☆ | ★★★ | Low | High |
-| Text Tool | ★★★ | ★★★ | Medium | High |
-| Flip H/V | ★★★ | ★★☆ | Minimal | High |
-| Z-Ordering | ★★☆ | ★★★ | Low | Medium |
-| Eyedropper | ★★☆ | ★★★ | Low | Medium |
-| Style Presets | ★★☆ | ★★★ | Medium | Medium |
-| Layers | ★☆☆ | ★★★ | Medium | Medium |
-| Direct Selection | ★☆☆ | ★★★ | Medium | Medium |
-| TikZ Import | ★☆☆ | ★★★ | High | Medium |
-| Smart Guides | ★★★ | ★★☆ | Medium | Medium |
-| Bezier Tool | ★☆☆ | ★★★ | High | Low |
-| Boolean Ops | ★☆☆ | ★★☆ | High | Low |
-| Gradients | ★☆☆ | ★★☆ | High | Low |
+Requires computational geometry. Defer to later version.
 
 ---
 
-## Implementation Roadmap
+## Features Deferred to Part 2 (Diagram Generator)
 
-### Version 1.1 - Essential Polish
+These features are **out of scope** for Part 1. They will be added when Part 2 is forked.
+
+| Feature | Reason for Deferral |
+|---------|---------------------|
+| Arrow heads/tails | Diagram-specific (flowcharts, etc.) |
+| Node anchors (north/south/east/west) | Connection logic for diagrams |
+| Smart connectors | Auto-routing arrows between shapes |
+| Text tool / Labels | Text in boxes is diagram-specific |
+| Label on line/arrow | Diagram annotation feature |
+| Shape-to-shape snapping | Connection behavior |
+| Flowchart shapes | Specialized shape library |
+| Auto-layout | Automatic arrangement algorithms |
+| TikZ `\node` generation | Part 1 uses `\draw`, Part 2 uses `\node` |
+
+---
+
+## Features Deferred to Part 3 (Electrical)
+
+| Feature | Description |
+|---------|-------------|
+| Component library | Resistors, capacitors, inductors, etc. |
+| Circuit symbols | Standard electrical symbols |
+| Wire tool | Orthogonal routing for circuits |
+| Net labels | Naming wires/connections |
+| SPICE export | Simulation integration |
+| Component values | Resistance, capacitance labels |
+
+---
+
+## Part 1 Feature Summary
+
+### Must Ship (Blockers)
+
+| Feature | Effort | Notes |
+|---------|--------|-------|
+| Undo/Redo | Medium | Users will rage-quit without this |
+| Copy/Cut/Paste | Low | Basic expectation |
+| Duplicate (Ctrl+D) | Minimal | Very useful for patterns |
+| Select All | Minimal | |
+| Delete | Minimal | Confirm working |
+
+### Should Ship (Core Polish)
+
+| Feature | Effort | Notes |
+|---------|--------|-------|
+| Grouping | Medium | Essential for complex diagrams |
+| Align tools | Low | Quick win, high value |
+| Distribute tools | Low | Pairs with align |
+| Flip H/V | Minimal | Very easy to add |
+| Z-ordering | Low | Front/back control |
+
+### Nice to Ship (Quality)
+
+| Feature | Effort | Notes |
+|---------|--------|-------|
+| Eyedropper | Low | Quick color sampling |
+| Format painter | Low | Style copying |
+| Style presets | Medium | Reusable styles |
+| Transform handles | Medium | Visual scale/rotate |
+| Rotate 90° | Minimal | Precise rotation |
+| Direct selection | Medium | Vertex editing |
+| Smart guides | Medium | Alignment hints |
+| Layers | Medium | Organization |
+
+### Can Wait (Future 1.x)
+
+| Feature | Effort |
+|---------|--------|
+| SVG export | Medium |
+| PNG export | Low |
+| Grid customization | Low |
+| Canvas resize | Low |
+| Recent files | Low |
+| Preferences dialog | Medium |
+| Guide lines | Medium |
+| Bezier handles | High |
+| Boolean ops | High |
+
+---
+
+## Suggested Release Plan
+
+### Version 1.1 - "It Actually Works"
+- [x] Current feature set
 - [ ] Undo/Redo system
 - [ ] Copy/Cut/Paste/Duplicate
-- [ ] Arrow heads on lines and curves
 - [ ] Select All
-- [ ] Flip Horizontal/Vertical
+- [ ] Flip H/V
 
-### Version 1.2 - Organization
-- [ ] Grouping and ungrouping
+### Version 1.2 - "Organization"
+- [ ] Grouping / Ungrouping
 - [ ] Z-ordering (front/back)
-- [ ] Basic align tools (left, center, right, top, middle, bottom)
+- [ ] Align tools
+- [ ] Distribute tools
 
-### Version 1.3 - Text & Style
-- [ ] Text/label tool
+### Version 1.3 - "Polish"
 - [ ] Eyedropper
 - [ ] Format painter
-- [ ] Style presets panel
+- [ ] Style presets
+- [ ] Rotate 90° CW/CCW
 
-### Version 1.4 - Precision
-- [ ] Distribute tools
-- [ ] Smart guides
+### Version 1.4 - "Precision"
 - [ ] Transform handles (scale/rotate)
 - [ ] Direct selection tool
+- [ ] Smart guides
 
-### Version 1.5 - Interoperability
-- [ ] TikZ import (basic)
-- [ ] SVG export
-- [ ] PNG export
-- [ ] Clipboard TikZ code
-
-### Version 2.0 - Advanced
+### Version 1.5 - "Pro"
 - [ ] Layers panel
-- [ ] Bezier curve tool
-- [ ] Boolean operations
-- [ ] Gradient fills
+- [ ] SVG/PNG export
+- [ ] Preferences dialog
+- [ ] Recent files
+
+### Version 2.0 - Fork for Part 2
+- [ ] Arrow heads/tails
+- [ ] Text tool
+- [ ] Node anchors
+- [ ] Smart connectors
+- [ ] Flowchart shapes
 
 ---
 
-## UI Placement Suggestions
+## UI Layout for Part 1
 
-### Toolbar (Top)
+### Main Toolbar
 ```
-[New][Open][Save] | [Undo][Redo] | [Cut][Copy][Paste] | [Group][Ungroup] | [Align ▼][Distribute ▼] | [Flip H][Flip V]
-```
-
-### Tool Palette (Left)
-```
-[Select]        - V
-[Direct Select] - A
-[Point]         - P
-[Line]          - L
-[Polygon]       - G
-[Curve]         - C
-[Rectangle]     - R
-[Ellipse]       - E
-[Text]          - T
-[Eyedropper]    - I
+[New][Open][Save] | [Undo][Redo] | [Cut][Copy][Paste][Duplicate] | [Group][Ungroup] | [Align ▼][Distribute ▼] | [Flip H][Flip V] | [↑Front][↓Back]
 ```
 
-### Context Toolbar (Dynamic)
-Changes based on selection:
-- **Line selected**: Width, color, style, arrow head, arrow tail
-- **Shape selected**: Fill, stroke, opacity, corner radius
-- **Text selected**: Font size, alignment
+### Tool Palette (Left Side)
+```
+[Select]        V
+[Direct Select] A    (Tier 3)
+───────────────────
+[Point]         P
+[Line]          L
+[Polygon]       G
+[Curve]         C
+───────────────────
+[Rectangle]     R
+[Circle]        O
+[Ellipse]       E
+[Triangle]      T
+[N-gon]         N
+───────────────────
+[Eyedropper]    I    (Tier 3)
+```
+
+### Context Toolbar (Top, Dynamic)
+Shows relevant controls for current selection:
+- **No selection**: Grid toggle, snap toggle, zoom
+- **Shape selected**: Fill, stroke, line width, style, opacity, corner radius
 - **Multiple selected**: Align, distribute, group
 
-### Dock Panels (Right)
-- Properties (always visible)
-- Styles (collapsible)
-- Layers (collapsible)
+### Right Dock
+- Properties Panel (always)
+- Styles Panel (collapsible, Tier 3)
+- Layers Panel (collapsible, Tier 3)
 - TikZ Code (movable)
 
 ---
 
-## Notes for Implementation
+## Keyboard Shortcuts (Part 1)
 
-### Keep It Simple
-- Prefer toolbar buttons over nested menus
-- Use icons with tooltips, not just text
-- Show keyboard shortcuts in tooltips
-- Avoid modal dialogs; use inline editing
+### File
+| Action | Shortcut |
+|--------|----------|
+| New | Ctrl+N |
+| Open | Ctrl+O |
+| Save | Ctrl+S |
+| Save As | Ctrl+Shift+S |
+| Export TikZ | Ctrl+E |
 
-### Discoverability
-- Right-click context menus for common actions
-- Keyboard shortcuts listed in menus
-- Help → Keyboard Shortcuts reference
+### Edit
+| Action | Shortcut |
+|--------|----------|
+| Undo | Ctrl+Z |
+| Redo | Ctrl+Shift+Z |
+| Cut | Ctrl+X |
+| Copy | Ctrl+C |
+| Paste | Ctrl+V |
+| Paste in Place | Ctrl+Shift+V |
+| Duplicate | Ctrl+D |
+| Select All | Ctrl+A |
+| Delete | Delete |
 
-### Performance
-- Lazy loading for panels
-- Efficient undo stack (don't store full document copies)
-- Background compilation for preview
+### Arrange
+| Action | Shortcut |
+|--------|----------|
+| Group | Ctrl+G |
+| Ungroup | Ctrl+Shift+G |
+| Bring to Front | Ctrl+Shift+] |
+| Bring Forward | Ctrl+] |
+| Send Backward | Ctrl+[ |
+| Send to Back | Ctrl+Shift+[ |
+| Flip Horizontal | H |
+| Flip Vertical | V |
+| Rotate 90° CW | Ctrl+R |
+| Rotate 90° CCW | Ctrl+Shift+R |
 
-### Accessibility
-- Keyboard navigation for all tools
-- High contrast icons
-- Screen reader labels where possible
+### View
+| Action | Shortcut |
+|--------|----------|
+| Zoom In | Ctrl++ |
+| Zoom Out | Ctrl+- |
+| Zoom to Fit | Ctrl+0 |
+| Toggle Grid | G |
+
+### Tools
+| Tool | Shortcut |
+|------|----------|
+| Select | V |
+| Direct Select | A |
+| Point | P |
+| Line | L |
+| Polygon | G |
+| Curve | C |
+| Rectangle | R |
+| Circle | O |
+| Ellipse | E |
+| Eyedropper | I |
 
 ---
 
-## References
-
-- [TikZiT](https://tikzit.github.io/) - Node-graph TikZ editor
-- [Ipe](http://ipe.otfried.org/) - LaTeX figure editor
-- [Figma](https://figma.com/) - Modern vector design
-- [PowerPoint](https://www.microsoft.com/en-us/microsoft-365/powerpoint) - Presentation software
-- [Illustrator](https://www.adobe.com/products/illustrator.html) - Professional vector graphics
-
----
-
-*Last updated: January 2026*
+*Document reflects Part 1 scope only. Last updated: January 2026*
