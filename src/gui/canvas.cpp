@@ -170,21 +170,21 @@ void Canvas::deleteSelected() {
 void Canvas::setGridVisible(bool visible) {
     if (m_gridVisible != visible) {
         m_gridVisible = visible;
-        update();
+        invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
     }
 }
 
 void Canvas::setAxesVisible(bool visible) {
     if (m_axesVisible != visible) {
         m_axesVisible = visible;
-        update();
+        invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
     }
 }
 
 void Canvas::setAxisTicksVisible(bool visible) {
     if (m_axisTicksVisible != visible) {
         m_axisTicksVisible = visible;
-        update();
+        invalidate(sceneRect(), QGraphicsScene::BackgroundLayer);
     }
 }
 

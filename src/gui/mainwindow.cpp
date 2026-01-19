@@ -116,10 +116,58 @@ MainWindow::MainWindow(QWidget *parent)
             background-color: #ffffff;
             border: 1px solid #000000;
             padding: 4px;
+            padding-right: 20px;
             color: #000000;
         }
         QSpinBox:focus, QDoubleSpinBox:focus {
             border: 2px solid #000000;
+        }
+        QSpinBox::up-button, QDoubleSpinBox::up-button {
+            subcontrol-origin: border;
+            subcontrol-position: top right;
+            width: 18px;
+            border-left: 1px solid #000000;
+            border-bottom: 1px solid #000000;
+            background-color: #ffffff;
+        }
+        QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {
+            background-color: #e0e0e0;
+        }
+        QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {
+            background-color: #000000;
+        }
+        QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 6px solid #000000;
+        }
+        QSpinBox::up-arrow:pressed, QDoubleSpinBox::up-arrow:pressed {
+            border-bottom-color: #ffffff;
+        }
+        QSpinBox::down-button, QDoubleSpinBox::down-button {
+            subcontrol-origin: border;
+            subcontrol-position: bottom right;
+            width: 18px;
+            border-left: 1px solid #000000;
+            background-color: #ffffff;
+        }
+        QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {
+            background-color: #e0e0e0;
+        }
+        QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {
+            background-color: #000000;
+        }
+        QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid #000000;
+        }
+        QSpinBox::down-arrow:pressed, QDoubleSpinBox::down-arrow:pressed {
+            border-top-color: #ffffff;
         }
         QSlider::groove:horizontal {
             border: 1px solid #000000;
