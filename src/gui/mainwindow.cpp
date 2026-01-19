@@ -715,19 +715,32 @@ void MainWindow::onFillColorChanged(const QColor &color) {
 }
 
 void MainWindow::onLineStyleChanged(int style) {
+    LineStyle lineStyle = static_cast<LineStyle>(style);
     bool dashed = (style != static_cast<int>(LineStyle::Solid));
+
     for (QGraphicsItem *item : m_canvas->selectedItems()) {
         if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
             li->line()->setDashed(dashed);
         } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
             ci->curve()->setDashed(dashed);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setLineStyle(lineStyle);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setLineStyle(lineStyle);
         }
     }
 }
 
 void MainWindow::onFillPatternChanged(int pattern) {
-    // TODO: Implement fill pattern support in data models
-    Q_UNUSED(pattern);
+    FillPattern fillPattern = static_cast<FillPattern>(pattern);
+
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setFillPattern(fillPattern);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setFillPattern(fillPattern);
+        }
+    }
 }
 
 void MainWindow::onRotationChanged(double angle) {

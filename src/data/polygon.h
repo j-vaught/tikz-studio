@@ -7,6 +7,7 @@
 #include <QVector>
 #include <QString>
 #include <QPainterPath>
+#include "common.h"
 
 class Point;
 
@@ -48,6 +49,12 @@ public:
     float lineWidth() const { return m_lineWidth; }
     void setLineWidth(float width);
 
+    LineStyle lineStyle() const { return m_lineStyle; }
+    void setLineStyle(LineStyle style);
+
+    FillPattern fillPattern() const { return m_fillPattern; }
+    void setFillPattern(FillPattern pattern);
+
     float opacity() const { return m_opacity; }
     void setOpacity(float opacity);
 
@@ -73,6 +80,8 @@ private:
     QColor m_fillColor;
     QColor m_strokeColor;
     float m_lineWidth = 0.8f;
+    LineStyle m_lineStyle = LineStyle::Solid;
+    FillPattern m_fillPattern = FillPattern::Solid;
     float m_opacity = 1.0f;
     float m_defaultCornerRadius = 0.0f;
 };

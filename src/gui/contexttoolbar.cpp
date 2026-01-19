@@ -187,6 +187,12 @@ void ContextToolbar::updateForSelection(const QList<QGraphicsItem*> &items) {
         m_currentFillColor = poly->fillColor();
         updateColorButton(m_strokeColorBtn, m_currentStrokeColor);
         updateColorButton(m_fillColorBtn, m_currentFillColor);
+        // Set line style combo
+        int lineStyleIdx = m_lineStyleCombo->findData(static_cast<int>(poly->lineStyle()));
+        if (lineStyleIdx >= 0) m_lineStyleCombo->setCurrentIndex(lineStyleIdx);
+        // Set fill pattern combo
+        int fillPatternIdx = m_fillPatternCombo->findData(static_cast<int>(poly->fillPattern()));
+        if (fillPatternIdx >= 0) m_fillPatternCombo->setCurrentIndex(fillPatternIdx);
     } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
         m_selectionLabel->setText("Curve");
         Curve *curve = ci->curve();
@@ -203,6 +209,12 @@ void ContextToolbar::updateForSelection(const QList<QGraphicsItem*> &items) {
         updateColorButton(m_strokeColorBtn, m_currentStrokeColor);
         updateColorButton(m_fillColorBtn, m_currentFillColor);
         m_rotationSpin->setValue(ellipse->rotation());
+        // Set line style combo
+        int lineStyleIdx = m_lineStyleCombo->findData(static_cast<int>(ellipse->lineStyle()));
+        if (lineStyleIdx >= 0) m_lineStyleCombo->setCurrentIndex(lineStyleIdx);
+        // Set fill pattern combo
+        int fillPatternIdx = m_fillPatternCombo->findData(static_cast<int>(ellipse->fillPattern()));
+        if (fillPatternIdx >= 0) m_fillPatternCombo->setCurrentIndex(fillPatternIdx);
     }
 
     m_updating = false;

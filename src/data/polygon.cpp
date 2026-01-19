@@ -114,6 +114,20 @@ void Polygon::setLineWidth(float width) {
     }
 }
 
+void Polygon::setLineStyle(LineStyle style) {
+    if (m_lineStyle != style) {
+        m_lineStyle = style;
+        emit changed();
+    }
+}
+
+void Polygon::setFillPattern(FillPattern pattern) {
+    if (m_fillPattern != pattern) {
+        m_fillPattern = pattern;
+        emit changed();
+    }
+}
+
 void Polygon::setOpacity(float opacity) {
     if (m_opacity != opacity) {
         m_opacity = qBound(0.0f, opacity, 1.0f);
@@ -237,13 +251,48 @@ static QString colorToTikz(const QColor &color) {
         .arg(color.red()).arg(color.green()).arg(color.blue());
 }
 
+static QString lineStyleToTikz(LineStyle style) {
+    switch (style) {
+        case LineStyle::Dashed: return "dashed";
+        case LineStyle::Dotted: return "dotted";
+        case LineStyle::DashDot: return "dash dot";
+        case LineStyle::DashDotDot: return "dash dot dot";
+        default: return QString();
+    }
+}
+
+static QString fillPatternToTikz(FillPattern pattern, const QColor &color) {
+    QString colorName = colorToTikz(color);
+    switch (pattern) {
+        case FillPattern::HorizontalLines:
+            return QString("pattern=horizontal lines, pattern color=%1").arg(colorName);
+        case FillPattern::VerticalLines:
+            return QString("pattern=vertical lines, pattern color=%1").arg(colorName);
+        case FillPattern::CrossHatch:
+            return QString("pattern=grid, pattern color=%1").arg(colorName);
+        case FillPattern::DiagonalLines:
+            return QString("pattern=north east lines, pattern color=%1").arg(colorName);
+        case FillPattern::DiagonalCrossHatch:
+            return QString("pattern=crosshatch, pattern color=%1").arg(colorName);
+        case FillPattern::Dots:
+            return QString("pattern=dots, pattern color=%1").arg(colorName);
+        default:
+            return QString();
+    }
+}
+
 QString Polygon::tikz() const {
     if (vertexCount() < 2) return QString();
 
     QStringList opts;
 
-    // Fill
-    if (m_fillColor.isValid() && m_fillColor.alpha() > 0) {
+    // Fill - either solid color or pattern
+    if (m_fillPattern != FillPattern::None && m_fillPattern != FillPattern::Solid) {
+        QString patternStr = fillPatternToTikz(m_fillPattern, m_fillColor);
+        if (!patternStr.isEmpty()) {
+            opts << patternStr;
+        }
+    } else if (m_fillPattern == FillPattern::Solid && m_fillColor.isValid() && m_fillColor.alpha() > 0) {
         opts << QString("fill=%1").arg(colorToTikz(m_fillColor));
     }
 
@@ -255,6 +304,12 @@ QString Polygon::tikz() const {
     // Line width
     if (m_lineWidth != 0.8f) {
         opts << QString("line width=%1pt").arg(m_lineWidth, 0, 'f', 1);
+    }
+
+    // Line style
+    QString lineStyleStr = lineStyleToTikz(m_lineStyle);
+    if (!lineStyleStr.isEmpty()) {
+        opts << lineStyleStr;
     }
 
     // Opacity
