@@ -50,10 +50,9 @@
     (12.500,11.750) .. controls (14.750,11.750) .. (15.500,9.500) --
     (16.250,7.000) .. controls (16.500,6.000) .. (17.500,6.000) -- cycle;
 
-  % Cab body - right/trailer section (parallel edges)
+  % Cab body - right/trailer section (parallel edges, flat top)
   \filldraw[fill=lightgray, draw=black, line width=4.0pt]
-    (61.750,16.750) .. controls (62.250,16.750) .. (62.250,16.250) --
-    (62.750,14.000) --
+    (62.750,16.750) --
     (62.750,10.000) .. controls (62.750,9.500) .. (62.500,9.000) --
     (62.250,8.500) .. controls (62.000,8.000) .. (61.500,8.000) --
     (55.750,8.000) .. controls (55.000,8.000) .. (54.500,9.500) --
@@ -62,7 +61,7 @@
     (43.000,9.000) .. controls (42.750,8.000) .. (42.000,7.250) --
     (41.500,7.250) .. controls (41.000,7.250) .. (41.000,7.750) --
     (35.500,7.750) .. controls (35.250,7.750) .. (35.250,8.000) --
-    (35.250,16.250) .. controls (35.250,16.750) .. (35.750,16.750) -- cycle;
+    (35.250,16.750) -- cycle;
 
   % === LAYER 4: Window area (white background) - cleaner geometry ===
 
@@ -115,11 +114,8 @@
 
   % === LAYER 7: Lines (draw last, on top) ===
 
-  % Horizontal line across - truly horizontal now
+  % Horizontal line across
   \draw[line width=4.0pt] (2.250,14.000) -- (62.750,14.000);
-
-  % Upper line on trailer
-  \draw[line width=4.0pt] (61.750,15.500) -- (35.500,15.500);
 
 \end{tikzpicture}
 
