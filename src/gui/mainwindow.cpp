@@ -637,6 +637,25 @@ void MainWindow::compileAndPreview() {
     out << m_document->tikzFull();
     texFile.close();
 
+    // Find pdflatex - GUI apps don't inherit shell PATH on macOS
+    QString pdflatexPath = "pdflatex";  // Try PATH first
+    QStringList searchPaths = {
+        "/Library/TeX/texbin/pdflatex",           // MacTeX default
+        "/usr/local/texlive/2025/bin/universal-darwin/pdflatex",
+        "/usr/local/texlive/2024/bin/universal-darwin/pdflatex",
+        "/usr/local/texlive/2023/bin/universal-darwin/pdflatex",
+        "/opt/homebrew/bin/pdflatex",             // Homebrew ARM
+        "/usr/local/bin/pdflatex",                // Homebrew Intel
+        "/usr/bin/pdflatex"                       // System
+    };
+
+    for (const QString &path : searchPaths) {
+        if (QFile::exists(path)) {
+            pdflatexPath = path;
+            break;
+        }
+    }
+
     // Run pdflatex
     m_compileProcess = new QProcess(this);
     m_compileProcess->setWorkingDirectory(m_tempDir);
@@ -644,7 +663,7 @@ void MainWindow::compileAndPreview() {
     connect(m_compileProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, &MainWindow::onCompileFinished);
 
-    m_compileProcess->start("pdflatex", QStringList()
+    m_compileProcess->start(pdflatexPath, QStringList()
         << "-interaction=nonstopmode"
         << "-halt-on-error"
         << "preview.tex");
