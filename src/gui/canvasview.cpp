@@ -139,13 +139,18 @@ void CanvasView::clearBackgroundImage() {
     viewport()->update();
 }
 
+void CanvasView::setBackgroundOpacity(float opacity) {
+    m_backgroundOpacity = qBound(0.0f, opacity, 1.0f);
+    viewport()->update();
+}
+
 void CanvasView::drawBackground(QPainter *painter, const QRectF &rect) {
     // Let the scene draw its background (grid)
     QGraphicsView::drawBackground(painter, rect);
 
     // Draw background image if set
     if (!m_backgroundImage.isNull()) {
-        painter->setOpacity(0.5);  // Semi-transparent for tracing
+        painter->setOpacity(m_backgroundOpacity);
         painter->drawPixmap(m_imageRect.toRect(), m_backgroundImage);
         painter->setOpacity(1.0);
     }

@@ -26,6 +26,8 @@ public:
     void clearBackgroundImage();
     bool hasBackgroundImage() const { return !m_backgroundImage.isNull(); }
     QString backgroundImagePath() const { return m_backgroundImagePath; }
+    void setBackgroundOpacity(float opacity);
+    float backgroundOpacity() const { return m_backgroundOpacity; }
 
 signals:
     void zoomChanged(float level);
@@ -44,6 +46,7 @@ private:
     QPixmap m_backgroundImage;
     QString m_backgroundImagePath;
     QRectF m_imageRect;
+    float m_backgroundOpacity = 0.5f;
 
     bool m_panning = false;
     QPoint m_panStart;

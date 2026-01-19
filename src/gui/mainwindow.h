@@ -37,6 +37,8 @@ private slots:
     void clearBackgroundImage();
     void setBackgroundOpacity(int value);
     void toggleGrid(bool visible);
+    void toggleAxes(bool visible);
+    void toggleAxisTicks(bool visible);
 
     void compileAndPreview();
     void onCompileFinished(int exitCode);

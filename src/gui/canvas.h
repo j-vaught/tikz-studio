@@ -40,9 +40,15 @@ public:
     // Delete selected items
     void deleteSelected();
 
-    // Grid visibility
+    // Grid and axis visibility
     bool gridVisible() const { return m_gridVisible; }
     void setGridVisible(bool visible);
+
+    bool axesVisible() const { return m_axesVisible; }
+    void setAxesVisible(bool visible);
+
+    bool axisTicksVisible() const { return m_axisTicksVisible; }
+    void setAxisTicksVisible(bool visible);
 
 signals:
     void selectionChanged();
@@ -107,6 +113,8 @@ private:
     int m_regPolySides = 6;  // Default for N-gon
 
     bool m_gridVisible = true;
+    bool m_axesVisible = true;
+    bool m_axisTicksVisible = true;
 };
 
 #endif // CANVAS_H

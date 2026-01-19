@@ -28,6 +28,8 @@
 #include <QVBoxLayout>
 #include <QGroupBox>
 #include <QPushButton>
+#include <QCheckBox>
+#include <QToolButton>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -62,6 +64,22 @@ MainWindow::MainWindow(QWidget *parent)
             background-color: #ffffff;
             border: 1px solid #000000;
             spacing: 4px;
+            padding: 4px;
+        }
+        QToolBar QToolButton {
+            background-color: #ffffff;
+            border: 2px solid #000000;
+            padding: 6px 10px;
+            margin: 2px;
+            font-weight: bold;
+            color: #000000;
+        }
+        QToolBar QToolButton:hover {
+            background-color: #e0e0e0;
+        }
+        QToolBar QToolButton:pressed {
+            background-color: #000000;
+            color: #ffffff;
         }
         QDockWidget {
             titlebar-close-icon: url(close.png);
@@ -285,34 +303,61 @@ void MainWindow::setupDocks() {
     m_propertiesDock->setFeatures(QDockWidget::DockWidgetMovable);
     addDockWidget(Qt::RightDockWidgetArea, m_propertiesDock);
 
+    // Display options dock (grid, axes, background)
+    QDockWidget *displayDock = new QDockWidget("Display", this);
+    QWidget *displayWidget = new QWidget();
+    QVBoxLayout *displayLayout = new QVBoxLayout(displayWidget);
+    displayLayout->setContentsMargins(8, 8, 8, 8);
+
+    // Grid/Axis controls
+    QLabel *gridLabel = new QLabel("Grid & Axes:");
+    gridLabel->setStyleSheet("font-weight: bold;");
+    displayLayout->addWidget(gridLabel);
+
+    QCheckBox *gridCheck = new QCheckBox("Show Grid");
+    gridCheck->setChecked(true);
+    connect(gridCheck, &QCheckBox::toggled, this, &MainWindow::toggleGrid);
+    displayLayout->addWidget(gridCheck);
+
+    QCheckBox *axesCheck = new QCheckBox("Show Axes");
+    axesCheck->setChecked(true);
+    connect(axesCheck, &QCheckBox::toggled, this, &MainWindow::toggleAxes);
+    displayLayout->addWidget(axesCheck);
+
+    QCheckBox *ticksCheck = new QCheckBox("Show Axis Ticks");
+    ticksCheck->setChecked(true);
+    connect(ticksCheck, &QCheckBox::toggled, this, &MainWindow::toggleAxisTicks);
+    displayLayout->addWidget(ticksCheck);
+
+    displayLayout->addSpacing(12);
+
     // Background image controls
-    QDockWidget *bgDock = new QDockWidget("Background", this);
-    QWidget *bgWidget = new QWidget();
-    QVBoxLayout *bgLayout = new QVBoxLayout(bgWidget);
-    bgLayout->setContentsMargins(8, 8, 8, 8);
+    QLabel *bgLabel = new QLabel("Background Image:");
+    bgLabel->setStyleSheet("font-weight: bold;");
+    displayLayout->addWidget(bgLabel);
 
     QPushButton *loadBgBtn = new QPushButton("Load Image...");
     connect(loadBgBtn, &QPushButton::clicked, this, &MainWindow::loadBackgroundImage);
-    bgLayout->addWidget(loadBgBtn);
+    displayLayout->addWidget(loadBgBtn);
 
     QPushButton *clearBgBtn = new QPushButton("Clear Image");
     connect(clearBgBtn, &QPushButton::clicked, this, &MainWindow::clearBackgroundImage);
-    bgLayout->addWidget(clearBgBtn);
+    displayLayout->addWidget(clearBgBtn);
 
-    QLabel *opacityLabel = new QLabel("Opacity:");
-    bgLayout->addWidget(opacityLabel);
+    QLabel *opacityLabel = new QLabel("Image Opacity:");
+    displayLayout->addWidget(opacityLabel);
 
     m_bgOpacitySlider = new QSlider(Qt::Horizontal);
     m_bgOpacitySlider->setRange(10, 100);
     m_bgOpacitySlider->setValue(50);
     m_bgOpacitySlider->setToolTip("Background image opacity for tracing");
     connect(m_bgOpacitySlider, &QSlider::valueChanged, this, &MainWindow::setBackgroundOpacity);
-    bgLayout->addWidget(m_bgOpacitySlider);
+    displayLayout->addWidget(m_bgOpacitySlider);
 
-    bgLayout->addStretch();
-    bgDock->setWidget(bgWidget);
-    bgDock->setFeatures(QDockWidget::DockWidgetMovable);
-    addDockWidget(Qt::RightDockWidgetArea, bgDock);
+    displayLayout->addStretch();
+    displayDock->setWidget(displayWidget);
+    displayDock->setFeatures(QDockWidget::DockWidgetMovable);
+    addDockWidget(Qt::RightDockWidgetArea, displayDock);
 
     // TikZ code dock
     m_codeDock = new QDockWidget("TikZ Code", this);
@@ -327,7 +372,7 @@ void MainWindow::setupDocks() {
 
     // Stack the right docks
     tabifyDockWidget(colorDock, m_propertiesDock);
-    tabifyDockWidget(m_propertiesDock, bgDock);
+    tabifyDockWidget(m_propertiesDock, displayDock);
     colorDock->raise();
 }
 
@@ -441,12 +486,19 @@ void MainWindow::clearBackgroundImage() {
 void MainWindow::setBackgroundOpacity(int value) {
     float opacity = value / 100.0f;
     m_document->setBackgroundOpacity(opacity);
-    // CanvasView would need to be updated to use this opacity
+    m_canvasView->setBackgroundOpacity(opacity);
 }
 
 void MainWindow::toggleGrid(bool visible) {
     m_canvas->setGridVisible(visible);
-    m_statusLabel->setText(visible ? "Grid visible" : "Grid hidden");
+}
+
+void MainWindow::toggleAxes(bool visible) {
+    m_canvas->setAxesVisible(visible);
+}
+
+void MainWindow::toggleAxisTicks(bool visible) {
+    m_canvas->setAxisTicksVisible(visible);
 }
 
 void MainWindow::compileAndPreview() {

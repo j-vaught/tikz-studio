@@ -174,6 +174,20 @@ void Canvas::setGridVisible(bool visible) {
     }
 }
 
+void Canvas::setAxesVisible(bool visible) {
+    if (m_axesVisible != visible) {
+        m_axesVisible = visible;
+        update();
+    }
+}
+
+void Canvas::setAxisTicksVisible(bool visible) {
+    if (m_axisTicksVisible != visible) {
+        m_axisTicksVisible = visible;
+        update();
+    }
+}
+
 void Canvas::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (!m_tools) {
         QGraphicsScene::mousePressEvent(event);
@@ -380,45 +394,91 @@ void Canvas::drawBackground(QPainter *painter, const QRectF &rect) {
     // White background
     painter->fillRect(rect, Qt::white);
 
-    if (!m_gridVisible) return;
-
-    // Draw grid
     float minorStep = GRID_MINOR * GLOBAL_SCALE;
     float majorStep = GRID_MAJOR * GLOBAL_SCALE;
 
-    // Minor grid (light gray)
-    QPen minorPen(QColor(230, 230, 230), 0.5);
-    painter->setPen(minorPen);
+    // Draw grid if visible
+    if (m_gridVisible) {
+        // Minor grid (light gray)
+        QPen minorPen(QColor(220, 220, 220), 0.5);
+        painter->setPen(minorPen);
 
-    float left = std::floor(rect.left() / minorStep) * minorStep;
-    float top = std::floor(rect.top() / minorStep) * minorStep;
+        float left = std::floor(rect.left() / minorStep) * minorStep;
+        float top = std::floor(rect.top() / minorStep) * minorStep;
 
-    for (float x = left; x <= rect.right(); x += minorStep) {
-        painter->drawLine(QPointF(x, rect.top()), QPointF(x, rect.bottom()));
+        for (float x = left; x <= rect.right(); x += minorStep) {
+            painter->drawLine(QPointF(x, rect.top()), QPointF(x, rect.bottom()));
+        }
+        for (float y = top; y <= rect.bottom(); y += minorStep) {
+            painter->drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y));
+        }
+
+        // Major grid (darker gray)
+        QPen majorPen(QColor(180, 180, 180), 1.0);
+        painter->setPen(majorPen);
+
+        left = std::floor(rect.left() / majorStep) * majorStep;
+        top = std::floor(rect.top() / majorStep) * majorStep;
+
+        for (float x = left; x <= rect.right(); x += majorStep) {
+            painter->drawLine(QPointF(x, rect.top()), QPointF(x, rect.bottom()));
+        }
+        for (float y = top; y <= rect.bottom(); y += majorStep) {
+            painter->drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y));
+        }
     }
-    for (float y = top; y <= rect.bottom(); y += minorStep) {
-        painter->drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y));
+
+    // Draw axes if visible
+    if (m_axesVisible) {
+        QPen axisPen(Qt::black, 2.0);
+        painter->setPen(axisPen);
+        painter->drawLine(QPointF(0, rect.top()), QPointF(0, rect.bottom()));
+        painter->drawLine(QPointF(rect.left(), 0), QPointF(rect.right(), 0));
+
+        // Draw axis ticks if visible
+        if (m_axisTicksVisible) {
+            QPen tickPen(Qt::black, 1.5);
+            painter->setPen(tickPen);
+
+            float tickSize = 5.0f;
+            QFont tickFont("Arial", 9);
+            painter->setFont(tickFont);
+
+            // X-axis ticks (along y=0)
+            float left = std::floor(rect.left() / majorStep) * majorStep;
+            for (float x = left; x <= rect.right(); x += majorStep) {
+                if (std::abs(x) < 0.001f) continue;  // Skip origin
+
+                // Draw tick mark
+                painter->drawLine(QPointF(x, -tickSize), QPointF(x, tickSize));
+
+                // Draw label (TikZ coordinate)
+                float tikzX = x / GLOBAL_SCALE;
+                QString label = QString::number(tikzX, 'g', 3);
+                QRectF textRect(x - 20, tickSize + 2, 40, 15);
+                painter->drawText(textRect, Qt::AlignHCenter | Qt::AlignTop, label);
+            }
+
+            // Y-axis ticks (along x=0)
+            float top = std::floor(rect.top() / majorStep) * majorStep;
+            for (float y = top; y <= rect.bottom(); y += majorStep) {
+                if (std::abs(y) < 0.001f) continue;  // Skip origin
+
+                // Draw tick mark
+                painter->drawLine(QPointF(-tickSize, y), QPointF(tickSize, y));
+
+                // Draw label (TikZ coordinate - note Y is inverted)
+                float tikzY = -y / GLOBAL_SCALE;
+                QString label = QString::number(tikzY, 'g', 3);
+                QRectF textRect(-35, y - 8, 28, 16);
+                painter->drawText(textRect, Qt::AlignRight | Qt::AlignVCenter, label);
+            }
+
+            // Origin label
+            QRectF originRect(4, 4, 20, 15);
+            painter->drawText(originRect, Qt::AlignLeft | Qt::AlignTop, "0");
+        }
     }
-
-    // Major grid (light blue-gray)
-    QPen majorPen(QColor(200, 200, 220), 1.0);
-    painter->setPen(majorPen);
-
-    left = std::floor(rect.left() / majorStep) * majorStep;
-    top = std::floor(rect.top() / majorStep) * majorStep;
-
-    for (float x = left; x <= rect.right(); x += majorStep) {
-        painter->drawLine(QPointF(x, rect.top()), QPointF(x, rect.bottom()));
-    }
-    for (float y = top; y <= rect.bottom(); y += majorStep) {
-        painter->drawLine(QPointF(rect.left(), y), QPointF(rect.right(), y));
-    }
-
-    // Axes (garnet color)
-    QPen axisPen(QColor(115, 0, 10), 1.5);
-    painter->setPen(axisPen);
-    painter->drawLine(QPointF(0, rect.top()), QPointF(0, rect.bottom()));
-    painter->drawLine(QPointF(rect.left(), 0), QPointF(rect.right(), 0));
 }
 
 void Canvas::handleSelectTool(QGraphicsSceneMouseEvent *event) {
