@@ -69,9 +69,18 @@ void ContextToolbar::setupWidgets() {
     m_lineStyleCombo = new QComboBox();
     m_lineStyleCombo->addItem("Solid", static_cast<int>(LineStyle::Solid));
     m_lineStyleCombo->addItem("Dashed", static_cast<int>(LineStyle::Dashed));
+    m_lineStyleCombo->addItem("Dense Dash", static_cast<int>(LineStyle::DenselyDashed));
+    m_lineStyleCombo->addItem("Loose Dash", static_cast<int>(LineStyle::LooselyDashed));
     m_lineStyleCombo->addItem("Dotted", static_cast<int>(LineStyle::Dotted));
+    m_lineStyleCombo->addItem("Dense Dot", static_cast<int>(LineStyle::DenselyDotted));
+    m_lineStyleCombo->addItem("Loose Dot", static_cast<int>(LineStyle::LooselyDotted));
     m_lineStyleCombo->addItem("Dash-Dot", static_cast<int>(LineStyle::DashDot));
-    m_lineStyleCombo->setFixedWidth(85);
+    m_lineStyleCombo->addItem("Dense D-D", static_cast<int>(LineStyle::DenselyDashDot));
+    m_lineStyleCombo->addItem("Loose D-D", static_cast<int>(LineStyle::LooselyDashDot));
+    m_lineStyleCombo->addItem("Dash-Dot-Dot", static_cast<int>(LineStyle::DashDotDot));
+    m_lineStyleCombo->addItem("Dense D-D-D", static_cast<int>(LineStyle::DenselyDashDotDot));
+    m_lineStyleCombo->addItem("Loose D-D-D", static_cast<int>(LineStyle::LooselyDashDotDot));
+    m_lineStyleCombo->setFixedWidth(105);
     m_lineStyleCombo->setToolTip("Line/stroke style");
     connect(m_lineStyleCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int index) {
@@ -80,6 +89,36 @@ void ContextToolbar::setupWidgets() {
         }
     });
     addWidget(m_lineStyleCombo);
+
+    // Line cap
+    m_lineCapCombo = new QComboBox();
+    m_lineCapCombo->addItem("Butt", static_cast<int>(LineCap::Butt));
+    m_lineCapCombo->addItem("Round", static_cast<int>(LineCap::Round));
+    m_lineCapCombo->addItem("Square", static_cast<int>(LineCap::Square));
+    m_lineCapCombo->setFixedWidth(70);
+    m_lineCapCombo->setToolTip("Line cap style");
+    connect(m_lineCapCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int index) {
+        if (!m_updating) {
+            emit lineCapChanged(static_cast<LineCap>(m_lineCapCombo->itemData(index).toInt()));
+        }
+    });
+    addWidget(m_lineCapCombo);
+
+    // Line join
+    m_lineJoinCombo = new QComboBox();
+    m_lineJoinCombo->addItem("Miter", static_cast<int>(LineJoin::Miter));
+    m_lineJoinCombo->addItem("Round", static_cast<int>(LineJoin::Round));
+    m_lineJoinCombo->addItem("Bevel", static_cast<int>(LineJoin::Bevel));
+    m_lineJoinCombo->setFixedWidth(70);
+    m_lineJoinCombo->setToolTip("Line join style");
+    connect(m_lineJoinCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int index) {
+        if (!m_updating) {
+            emit lineJoinChanged(static_cast<LineJoin>(m_lineJoinCombo->itemData(index).toInt()));
+        }
+    });
+    addWidget(m_lineJoinCombo);
 
     addSeparator();
 
@@ -100,12 +139,17 @@ void ContextToolbar::setupWidgets() {
     m_fillPatternCombo->addItem("Solid", static_cast<int>(FillPattern::Solid));
     m_fillPatternCombo->addItem("Horiz Lines", static_cast<int>(FillPattern::HorizontalLines));
     m_fillPatternCombo->addItem("Vert Lines", static_cast<int>(FillPattern::VerticalLines));
-    m_fillPatternCombo->addItem("Cross Hatch", static_cast<int>(FillPattern::CrossHatch));
-    m_fillPatternCombo->addItem("Diagonal", static_cast<int>(FillPattern::DiagonalLines));
-    m_fillPatternCombo->addItem("Diag Cross", static_cast<int>(FillPattern::DiagonalCrossHatch));
+    m_fillPatternCombo->addItem("Grid", static_cast<int>(FillPattern::Grid));
+    m_fillPatternCombo->addItem("NE Lines", static_cast<int>(FillPattern::NorthEastLines));
+    m_fillPatternCombo->addItem("NW Lines", static_cast<int>(FillPattern::NorthWestLines));
+    m_fillPatternCombo->addItem("Crosshatch", static_cast<int>(FillPattern::CrossHatch));
+    m_fillPatternCombo->addItem("Crosshatch Dots", static_cast<int>(FillPattern::CrossHatchDots));
     m_fillPatternCombo->addItem("Dots", static_cast<int>(FillPattern::Dots));
+    m_fillPatternCombo->addItem("5-Stars", static_cast<int>(FillPattern::FivePointedStars));
+    m_fillPatternCombo->addItem("6-Stars", static_cast<int>(FillPattern::SixPointedStars));
+    m_fillPatternCombo->addItem("Bricks", static_cast<int>(FillPattern::Bricks));
     m_fillPatternCombo->setCurrentIndex(1);  // Solid by default
-    m_fillPatternCombo->setFixedWidth(100);
+    m_fillPatternCombo->setFixedWidth(115);
     m_fillPatternCombo->setToolTip("Fill pattern");
     connect(m_fillPatternCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this](int index) {
@@ -190,6 +234,12 @@ void ContextToolbar::updateForSelection(const QList<QGraphicsItem*> &items) {
         // Set line style combo
         int lineStyleIdx = m_lineStyleCombo->findData(static_cast<int>(poly->lineStyle()));
         if (lineStyleIdx >= 0) m_lineStyleCombo->setCurrentIndex(lineStyleIdx);
+        // Set line cap combo
+        int lineCapIdx = m_lineCapCombo->findData(static_cast<int>(poly->lineCap()));
+        if (lineCapIdx >= 0) m_lineCapCombo->setCurrentIndex(lineCapIdx);
+        // Set line join combo
+        int lineJoinIdx = m_lineJoinCombo->findData(static_cast<int>(poly->lineJoin()));
+        if (lineJoinIdx >= 0) m_lineJoinCombo->setCurrentIndex(lineJoinIdx);
         // Set fill pattern combo
         int fillPatternIdx = m_fillPatternCombo->findData(static_cast<int>(poly->fillPattern()));
         if (fillPatternIdx >= 0) m_fillPatternCombo->setCurrentIndex(fillPatternIdx);
@@ -212,6 +262,12 @@ void ContextToolbar::updateForSelection(const QList<QGraphicsItem*> &items) {
         // Set line style combo
         int lineStyleIdx = m_lineStyleCombo->findData(static_cast<int>(ellipse->lineStyle()));
         if (lineStyleIdx >= 0) m_lineStyleCombo->setCurrentIndex(lineStyleIdx);
+        // Set line cap combo
+        int lineCapIdx = m_lineCapCombo->findData(static_cast<int>(ellipse->lineCap()));
+        if (lineCapIdx >= 0) m_lineCapCombo->setCurrentIndex(lineCapIdx);
+        // Set line join combo
+        int lineJoinIdx = m_lineJoinCombo->findData(static_cast<int>(ellipse->lineJoin()));
+        if (lineJoinIdx >= 0) m_lineJoinCombo->setCurrentIndex(lineJoinIdx);
         // Set fill pattern combo
         int fillPatternIdx = m_fillPatternCombo->findData(static_cast<int>(ellipse->fillPattern()));
         if (fillPatternIdx >= 0) m_fillPatternCombo->setCurrentIndex(fillPatternIdx);

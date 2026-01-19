@@ -357,6 +357,10 @@ void MainWindow::setupToolbars() {
             this, &MainWindow::onFillColorChanged);
     connect(m_contextToolbar, &ContextToolbar::lineStyleChanged,
             this, [this](LineStyle style) { onLineStyleChanged(static_cast<int>(style)); });
+    connect(m_contextToolbar, &ContextToolbar::lineCapChanged,
+            this, [this](LineCap cap) { onLineCapChanged(static_cast<int>(cap)); });
+    connect(m_contextToolbar, &ContextToolbar::lineJoinChanged,
+            this, [this](LineJoin join) { onLineJoinChanged(static_cast<int>(join)); });
     connect(m_contextToolbar, &ContextToolbar::fillPatternChanged,
             this, [this](FillPattern pattern) { onFillPatternChanged(static_cast<int>(pattern)); });
     connect(m_contextToolbar, &ContextToolbar::rotationChanged,
@@ -727,6 +731,30 @@ void MainWindow::onLineStyleChanged(int style) {
             pi->polygon()->setLineStyle(lineStyle);
         } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
             ei->ellipse()->setLineStyle(lineStyle);
+        }
+    }
+}
+
+void MainWindow::onLineCapChanged(int cap) {
+    LineCap lineCap = static_cast<LineCap>(cap);
+
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setLineCap(lineCap);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setLineCap(lineCap);
+        }
+    }
+}
+
+void MainWindow::onLineJoinChanged(int join) {
+    LineJoin lineJoin = static_cast<LineJoin>(join);
+
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setLineJoin(lineJoin);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setLineJoin(lineJoin);
         }
     }
 }

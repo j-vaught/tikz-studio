@@ -76,9 +76,31 @@ enum class Tool {
 enum class LineStyle {
     Solid,
     Dashed,
+    DenselyDashed,
+    LooselyDashed,
     Dotted,
+    DenselyDotted,
+    LooselyDotted,
     DashDot,
-    DashDotDot
+    DenselyDashDot,
+    LooselyDashDot,
+    DashDotDot,
+    DenselyDashDotDot,
+    LooselyDashDotDot
+};
+
+// Line cap styles
+enum class LineCap {
+    Butt,       // Default - square end at exact endpoint
+    Round,      // Rounded end
+    Square      // Square end extending past endpoint (rect in TikZ)
+};
+
+// Line join styles
+enum class LineJoin {
+    Miter,      // Default - sharp corners
+    Round,      // Rounded corners
+    Bevel       // Beveled/cut corners
 };
 
 // Fill patterns
@@ -87,10 +109,15 @@ enum class FillPattern {
     Solid,
     HorizontalLines,
     VerticalLines,
+    Grid,
+    NorthEastLines,
+    NorthWestLines,
     CrossHatch,
-    DiagonalLines,
-    DiagonalCrossHatch,
-    Dots
+    CrossHatchDots,
+    Dots,
+    FivePointedStars,
+    SixPointedStars,
+    Bricks
 };
 
 #endif // COMMON_H

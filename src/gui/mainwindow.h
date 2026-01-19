@@ -54,6 +54,8 @@ private slots:
     void onStrokeColorChanged(const QColor &color);
     void onFillColorChanged(const QColor &color);
     void onLineStyleChanged(int style);
+    void onLineCapChanged(int cap);
+    void onLineJoinChanged(int join);
     void onFillPatternChanged(int pattern);
     void onRotationChanged(double angle);
     void onScaleChanged(double scale);

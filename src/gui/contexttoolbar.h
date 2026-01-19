@@ -24,6 +24,8 @@ signals:
     void strokeColorChanged(const QColor &color);
     void fillColorChanged(const QColor &color);
     void lineStyleChanged(LineStyle style);
+    void lineCapChanged(LineCap cap);
+    void lineJoinChanged(LineJoin join);
     void fillPatternChanged(FillPattern pattern);
     void rotationChanged(double angle);
     void scaleChanged(double scale);
@@ -43,6 +45,8 @@ private:
     QDoubleSpinBox *m_lineWidthSpin;
     QPushButton *m_strokeColorBtn;
     QComboBox *m_lineStyleCombo;
+    QComboBox *m_lineCapCombo;
+    QComboBox *m_lineJoinCombo;
 
     // Fill controls
     QPushButton *m_fillColorBtn;

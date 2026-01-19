@@ -55,6 +55,12 @@ public:
     FillPattern fillPattern() const { return m_fillPattern; }
     void setFillPattern(FillPattern pattern);
 
+    LineCap lineCap() const { return m_lineCap; }
+    void setLineCap(LineCap cap);
+
+    LineJoin lineJoin() const { return m_lineJoin; }
+    void setLineJoin(LineJoin join);
+
     float opacity() const { return m_opacity; }
     void setOpacity(float opacity);
 
@@ -82,6 +88,8 @@ private:
     float m_lineWidth = 0.8f;
     LineStyle m_lineStyle = LineStyle::Solid;
     FillPattern m_fillPattern = FillPattern::Solid;
+    LineCap m_lineCap = LineCap::Butt;
+    LineJoin m_lineJoin = LineJoin::Miter;
     float m_opacity = 1.0f;
     float m_defaultCornerRadius = 0.0f;
 };

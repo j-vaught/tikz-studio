@@ -71,6 +71,20 @@ void Ellipse::setFillPattern(FillPattern pattern) {
     }
 }
 
+void Ellipse::setLineCap(LineCap cap) {
+    if (m_lineCap != cap) {
+        m_lineCap = cap;
+        emit changed();
+    }
+}
+
+void Ellipse::setLineJoin(LineJoin join) {
+    if (m_lineJoin != join) {
+        m_lineJoin = join;
+        emit changed();
+    }
+}
+
 void Ellipse::setOpacity(float opacity) {
     if (m_opacity != opacity) {
         m_opacity = qBound(0.0f, opacity, 1.0f);
@@ -96,10 +110,34 @@ static QString colorToTikz(const QColor &color) {
 static QString lineStyleToTikz(LineStyle style) {
     switch (style) {
         case LineStyle::Dashed: return "dashed";
+        case LineStyle::DenselyDashed: return "densely dashed";
+        case LineStyle::LooselyDashed: return "loosely dashed";
         case LineStyle::Dotted: return "dotted";
-        case LineStyle::DashDot: return "dash dot";
-        case LineStyle::DashDotDot: return "dash dot dot";
+        case LineStyle::DenselyDotted: return "densely dotted";
+        case LineStyle::LooselyDotted: return "loosely dotted";
+        case LineStyle::DashDot: return "dashdotted";
+        case LineStyle::DenselyDashDot: return "densely dashdotted";
+        case LineStyle::LooselyDashDot: return "loosely dashdotted";
+        case LineStyle::DashDotDot: return "dashdotdotted";
+        case LineStyle::DenselyDashDotDot: return "densely dashdotdotted";
+        case LineStyle::LooselyDashDotDot: return "loosely dashdotdotted";
         default: return QString();
+    }
+}
+
+static QString lineCapToTikz(LineCap cap) {
+    switch (cap) {
+        case LineCap::Round: return "line cap=round";
+        case LineCap::Square: return "line cap=rect";
+        default: return QString();  // Butt is default
+    }
+}
+
+static QString lineJoinToTikz(LineJoin join) {
+    switch (join) {
+        case LineJoin::Round: return "line join=round";
+        case LineJoin::Bevel: return "line join=bevel";
+        default: return QString();  // Miter is default
     }
 }
 
@@ -110,14 +148,24 @@ static QString fillPatternToTikz(FillPattern pattern, const QColor &color) {
             return QString("pattern=horizontal lines, pattern color=%1").arg(colorName);
         case FillPattern::VerticalLines:
             return QString("pattern=vertical lines, pattern color=%1").arg(colorName);
-        case FillPattern::CrossHatch:
+        case FillPattern::Grid:
             return QString("pattern=grid, pattern color=%1").arg(colorName);
-        case FillPattern::DiagonalLines:
+        case FillPattern::NorthEastLines:
             return QString("pattern=north east lines, pattern color=%1").arg(colorName);
-        case FillPattern::DiagonalCrossHatch:
+        case FillPattern::NorthWestLines:
+            return QString("pattern=north west lines, pattern color=%1").arg(colorName);
+        case FillPattern::CrossHatch:
             return QString("pattern=crosshatch, pattern color=%1").arg(colorName);
+        case FillPattern::CrossHatchDots:
+            return QString("pattern=crosshatch dots, pattern color=%1").arg(colorName);
         case FillPattern::Dots:
             return QString("pattern=dots, pattern color=%1").arg(colorName);
+        case FillPattern::FivePointedStars:
+            return QString("pattern=fivepointed stars, pattern color=%1").arg(colorName);
+        case FillPattern::SixPointedStars:
+            return QString("pattern=sixpointed stars, pattern color=%1").arg(colorName);
+        case FillPattern::Bricks:
+            return QString("pattern=bricks, pattern color=%1").arg(colorName);
         default:
             return QString();
     }
@@ -150,6 +198,18 @@ QString Ellipse::tikz() const {
     QString lineStyleStr = lineStyleToTikz(m_lineStyle);
     if (!lineStyleStr.isEmpty()) {
         opts << lineStyleStr;
+    }
+
+    // Line cap
+    QString lineCapStr = lineCapToTikz(m_lineCap);
+    if (!lineCapStr.isEmpty()) {
+        opts << lineCapStr;
+    }
+
+    // Line join
+    QString lineJoinStr = lineJoinToTikz(m_lineJoin);
+    if (!lineJoinStr.isEmpty()) {
+        opts << lineJoinStr;
     }
 
     // Opacity
