@@ -210,21 +210,30 @@ Right-click on any shape to access:
 - [ ] **Settings persistence**: Remember window layout, recent files
 - [ ] **Localization**: i18n support for multiple languages
 
-## Color Palette
+## Design
 
-Built-in UofSC brand colors (defined in `common.h`):
+The UI uses a clean **black and white** theme for clarity:
+- All UI elements (menus, toolbars, buttons, panels) are white with black borders
+- Selected tools and pressed buttons invert to black with white text
+- The color palette retains the full UofSC color set for selecting shape fill/stroke colors
 
-| Color | Hex | Usage |
-|-------|-----|-------|
-| Garnet | #73000A | Primary accent |
-| Black | #000000 | Default stroke |
-| White | #FFFFFF | Background |
-| Rose | #CC2E40 | Accent |
-| Atlantic | #466A9F | Accent |
-| Congaree | #1F414D | Accent |
-| Horseshoe | #65780B | Accent |
-| Grass | #CED318 | Accent |
-| Honeycomb | #A49137 | Accent |
+## Shape Color Palette
+
+Built-in UofSC brand colors for shapes (defined in `common.h`):
+
+| Color | Hex |
+|-------|-----|
+| Garnet | #73000A |
+| Black | #000000 |
+| White | #FFFFFF |
+| Rose | #CC2E40 |
+| Atlantic | #466A9F |
+| Congaree | #1F414D |
+| Horseshoe | #65780B |
+| Grass | #CED318 |
+| Honeycomb | #A49137 |
+| Dark Garnet | #570008 |
+| Azalea | #844247 |
 
 ## License
 
