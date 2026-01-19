@@ -17,18 +17,18 @@ ToolPalette::ToolPalette(QWidget *parent)
         QToolBar {
             background-color: #ffffff;
             border: 1px solid #000000;
-            spacing: 4px;
+            spacing: 2px;
             padding: 4px;
         }
         QToolButton {
             background-color: #ffffff;
             border: 2px solid #000000;
-            padding: 8px;
-            margin: 2px;
+            padding: 4px 6px;
+            margin: 1px;
             font-weight: bold;
             font-size: 11px;
-            min-width: 70px;
-            min-height: 40px;
+            min-width: 85px;
+            min-height: 24px;
             color: #000000;
         }
         QToolButton:hover {
@@ -153,6 +153,61 @@ void ToolPalette::setupActions() {
     m_actionGroup->addAction(m_regPolyAction);
     addAction(m_regPolyAction);
 
+    // Star tool
+    m_starAction = new QAction("Star", this);
+    m_starAction->setCheckable(true);
+    m_starAction->setShortcut(QKeySequence(Qt::Key_Asterisk));
+    m_starAction->setToolTip("Draw star (*)\nClick center, drag size");
+    m_actionGroup->addAction(m_starAction);
+    addAction(m_starAction);
+
+    // Diamond tool
+    m_diamondAction = new QAction("Diamond", this);
+    m_diamondAction->setCheckable(true);
+    m_diamondAction->setShortcut(QKeySequence(Qt::Key_D));
+    m_diamondAction->setToolTip("Draw diamond/rhombus (D)\nClick and drag");
+    m_actionGroup->addAction(m_diamondAction);
+    addAction(m_diamondAction);
+
+    // Arrow tool
+    m_arrowAction = new QAction("Arrow", this);
+    m_arrowAction->setCheckable(true);
+    m_arrowAction->setShortcut(QKeySequence(Qt::Key_A));
+    m_arrowAction->setToolTip("Draw block arrow (A)\nClick and drag");
+    m_actionGroup->addAction(m_arrowAction);
+    addAction(m_arrowAction);
+
+    // Trapezoid tool
+    m_trapezoidAction = new QAction("Trapezoid", this);
+    m_trapezoidAction->setCheckable(true);
+    m_trapezoidAction->setShortcut(QKeySequence(Qt::Key_Z));
+    m_trapezoidAction->setToolTip("Draw trapezoid (Z)\nClick and drag");
+    m_actionGroup->addAction(m_trapezoidAction);
+    addAction(m_trapezoidAction);
+
+    // Parallelogram tool
+    m_parallelogramAction = new QAction("Parallel", this);
+    m_parallelogramAction->setCheckable(true);
+    m_parallelogramAction->setShortcut(QKeySequence(Qt::Key_H));
+    m_parallelogramAction->setToolTip("Draw parallelogram (H)\nClick and drag");
+    m_actionGroup->addAction(m_parallelogramAction);
+    addAction(m_parallelogramAction);
+
+    addSeparator();
+
+    // Arcs section
+    QLabel *arcLabel = new QLabel("  Arcs");
+    arcLabel->setStyleSheet("font-weight: bold; color: #000000; padding: 4px;");
+    addWidget(arcLabel);
+
+    // Arc tool
+    m_arcAction = new QAction("Arc", this);
+    m_arcAction->setCheckable(true);
+    m_arcAction->setShortcut(QKeySequence(Qt::Key_U));
+    m_arcAction->setToolTip("Draw arc (U)\nClick center, drag to set radius and angle");
+    m_actionGroup->addAction(m_arcAction);
+    addAction(m_arcAction);
+
     // Connect signals
     connect(m_actionGroup, &QActionGroup::triggered, this, [this](QAction*) {
         emit toolChanged(currentTool());
@@ -170,6 +225,12 @@ Tool ToolPalette::currentTool() const {
     if (m_ellipseAction->isChecked()) return Tool::Ellipse;
     if (m_triangleAction->isChecked()) return Tool::Triangle;
     if (m_regPolyAction->isChecked()) return Tool::RegularPolygon;
+    if (m_arcAction->isChecked()) return Tool::Arc;
+    if (m_starAction->isChecked()) return Tool::Star;
+    if (m_diamondAction->isChecked()) return Tool::Diamond;
+    if (m_arrowAction->isChecked()) return Tool::Arrow;
+    if (m_trapezoidAction->isChecked()) return Tool::Trapezoid;
+    if (m_parallelogramAction->isChecked()) return Tool::Parallelogram;
     return Tool::Select;
 }
 
@@ -185,6 +246,12 @@ void ToolPalette::setCurrentTool(Tool tool) {
     case Tool::Ellipse: m_ellipseAction->setChecked(true); break;
     case Tool::Triangle: m_triangleAction->setChecked(true); break;
     case Tool::RegularPolygon: m_regPolyAction->setChecked(true); break;
+    case Tool::Arc: m_arcAction->setChecked(true); break;
+    case Tool::Star: m_starAction->setChecked(true); break;
+    case Tool::Diamond: m_diamondAction->setChecked(true); break;
+    case Tool::Arrow: m_arrowAction->setChecked(true); break;
+    case Tool::Trapezoid: m_trapezoidAction->setChecked(true); break;
+    case Tool::Parallelogram: m_parallelogramAction->setChecked(true); break;
     }
     emit toolChanged(tool);
 }

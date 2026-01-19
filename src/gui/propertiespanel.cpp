@@ -386,7 +386,18 @@ void PropertiesPanel::showToolDefaults(Tool tool) {
 
         case Tool::Polygon:
         case Tool::RegularPolygon:
-            toolName = (tool == Tool::RegularPolygon) ? "N-gon Tool" : "Polygon Tool";
+        case Tool::Star:
+        case Tool::Diamond:
+        case Tool::Arrow:
+        case Tool::Trapezoid:
+        case Tool::Parallelogram:
+            if (tool == Tool::RegularPolygon) toolName = "N-gon Tool";
+            else if (tool == Tool::Star) toolName = "Star Tool";
+            else if (tool == Tool::Diamond) toolName = "Diamond Tool";
+            else if (tool == Tool::Arrow) toolName = "Arrow Tool";
+            else if (tool == Tool::Trapezoid) toolName = "Trapezoid Tool";
+            else if (tool == Tool::Parallelogram) toolName = "Parallelogram Tool";
+            else toolName = "Polygon Tool";
             m_strokeGroup->show();
             m_fillGroup->show();
             m_transformGroup->show();
@@ -446,6 +457,17 @@ void PropertiesPanel::showToolDefaults(Tool tool) {
             m_rotationSpin->setValue(m_defaults.rotation);
             m_scaleSpin->setValue(m_defaults.scale);
             m_tensionSpin->setValue(m_defaults.curveTension);
+            break;
+
+        case Tool::Arc:
+            toolName = "Arc Tool";
+            m_strokeGroup->show();
+            m_transformGroup->show();
+            m_lineWidthSpin->setValue(m_defaults.lineWidth);
+            updateColorButton(m_strokeColorBtn, m_defaults.strokeColor);
+            m_lineStyleCombo->setCurrentIndex(m_lineStyleCombo->findData(static_cast<int>(m_defaults.lineStyle)));
+            m_rotationSpin->setValue(m_defaults.rotation);
+            m_scaleSpin->setValue(m_defaults.scale);
             break;
 
         default:

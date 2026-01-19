@@ -69,7 +69,13 @@ enum class Tool {
     Circle,
     Ellipse,
     Triangle,
-    RegularPolygon
+    RegularPolygon,
+    Arc,
+    Star,
+    Diamond,
+    Arrow,
+    Trapezoid,
+    Parallelogram
 };
 
 // Line/stroke styles

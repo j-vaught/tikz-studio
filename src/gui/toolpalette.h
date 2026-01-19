@@ -31,6 +31,12 @@ private:
     QAction *m_ellipseAction;
     QAction *m_triangleAction;
     QAction *m_regPolyAction;
+    QAction *m_arcAction;
+    QAction *m_starAction;
+    QAction *m_diamondAction;
+    QAction *m_arrowAction;
+    QAction *m_trapezoidAction;
+    QAction *m_parallelogramAction;
 
     QActionGroup *m_actionGroup;
 };

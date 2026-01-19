@@ -200,7 +200,10 @@ void Canvas::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     // Shape tools use drag
     if (tool == Tool::Rectangle || tool == Tool::Circle ||
         tool == Tool::Ellipse || tool == Tool::Triangle ||
-        tool == Tool::RegularPolygon) {
+        tool == Tool::RegularPolygon || tool == Tool::Arc ||
+        tool == Tool::Star || tool == Tool::Diamond ||
+        tool == Tool::Arrow || tool == Tool::Trapezoid ||
+        tool == Tool::Parallelogram) {
         if (event->button() == Qt::LeftButton) {
             m_shapeDragging = true;
             m_shapeStartPos = fromScreen(event->scenePos());
@@ -708,6 +711,133 @@ void Canvas::handleShapeDrag(QGraphicsSceneMouseEvent *event) {
         polyItem->setBrush(QBrush(previewColor));
         m_previewShape = polyItem;
     }
+    else if (tool == Tool::Star) {
+        int points = 5;  // 5-pointed star
+        QPointF delta = currentPos - m_shapeStartPos;
+        float outerRadius = std::sqrt(delta.x()*delta.x() + delta.y()*delta.y());
+        float innerRadius = outerRadius * 0.4f;  // Inner points at 40% of outer
+        float startAngle = std::atan2(delta.y(), delta.x());
+
+        QPolygonF poly;
+        for (int i = 0; i < points * 2; i++) {
+            float angle = startAngle + M_PI * i / points;
+            float r = (i % 2 == 0) ? outerRadius : innerRadius;
+            QPointF pt = m_shapeStartPos + QPointF(r * std::cos(angle), r * std::sin(angle));
+            poly << toScreen(pt);
+        }
+
+        QGraphicsPolygonItem *polyItem = new QGraphicsPolygonItem(poly);
+        polyItem->setPen(QPen(Qt::gray, 1, Qt::DashLine));
+        polyItem->setBrush(QBrush(previewColor));
+        m_previewShape = polyItem;
+    }
+    else if (tool == Tool::Diamond) {
+        float dx = std::abs(currentPos.x() - m_shapeStartPos.x());
+        float dy = std::abs(currentPos.y() - m_shapeStartPos.y());
+
+        QPolygonF poly;
+        poly << toScreen(QPointF(m_shapeStartPos.x(), m_shapeStartPos.y() + dy));  // Top
+        poly << toScreen(QPointF(m_shapeStartPos.x() + dx, m_shapeStartPos.y()));  // Right
+        poly << toScreen(QPointF(m_shapeStartPos.x(), m_shapeStartPos.y() - dy));  // Bottom
+        poly << toScreen(QPointF(m_shapeStartPos.x() - dx, m_shapeStartPos.y()));  // Left
+
+        QGraphicsPolygonItem *polyItem = new QGraphicsPolygonItem(poly);
+        polyItem->setPen(QPen(Qt::gray, 1, Qt::DashLine));
+        polyItem->setBrush(QBrush(previewColor));
+        m_previewShape = polyItem;
+    }
+    else if (tool == Tool::Arrow) {
+        float dx = currentPos.x() - m_shapeStartPos.x();
+        float dy = currentPos.y() - m_shapeStartPos.y();
+        float length = std::sqrt(dx*dx + dy*dy);
+        if (length < 0.1f) length = 0.1f;
+
+        // Arrow pointing in drag direction
+        float headWidth = length * 0.4f;
+        float headLength = length * 0.35f;
+        float shaftWidth = length * 0.15f;
+
+        // Normalize direction
+        float nx = dx / length;
+        float ny = dy / length;
+        // Perpendicular
+        float px = -ny;
+        float py = nx;
+
+        QPointF tip = currentPos;
+        QPointF headBase = m_shapeStartPos + QPointF(nx * (length - headLength), ny * (length - headLength));
+        QPointF shaftEnd = m_shapeStartPos;
+
+        QPolygonF poly;
+        poly << toScreen(tip);  // Arrow tip
+        poly << toScreen(headBase + QPointF(px * headWidth/2, py * headWidth/2));  // Head right
+        poly << toScreen(headBase + QPointF(px * shaftWidth/2, py * shaftWidth/2));  // Shaft right top
+        poly << toScreen(shaftEnd + QPointF(px * shaftWidth/2, py * shaftWidth/2));  // Shaft right bottom
+        poly << toScreen(shaftEnd - QPointF(px * shaftWidth/2, py * shaftWidth/2));  // Shaft left bottom
+        poly << toScreen(headBase - QPointF(px * shaftWidth/2, py * shaftWidth/2));  // Shaft left top
+        poly << toScreen(headBase - QPointF(px * headWidth/2, py * headWidth/2));  // Head left
+
+        QGraphicsPolygonItem *polyItem = new QGraphicsPolygonItem(poly);
+        polyItem->setPen(QPen(Qt::gray, 1, Qt::DashLine));
+        polyItem->setBrush(QBrush(previewColor));
+        m_previewShape = polyItem;
+    }
+    else if (tool == Tool::Trapezoid) {
+        float x1 = qMin(m_shapeStartPos.x(), currentPos.x());
+        float y1 = qMin(m_shapeStartPos.y(), currentPos.y());
+        float x2 = qMax(m_shapeStartPos.x(), currentPos.x());
+        float y2 = qMax(m_shapeStartPos.y(), currentPos.y());
+        float width = x2 - x1;
+        float inset = width * 0.2f;  // Top is narrower by 20% on each side
+
+        QPolygonF poly;
+        poly << toScreen(QPointF(x1 + inset, y2));  // Top left
+        poly << toScreen(QPointF(x2 - inset, y2));  // Top right
+        poly << toScreen(QPointF(x2, y1));          // Bottom right
+        poly << toScreen(QPointF(x1, y1));          // Bottom left
+
+        QGraphicsPolygonItem *polyItem = new QGraphicsPolygonItem(poly);
+        polyItem->setPen(QPen(Qt::gray, 1, Qt::DashLine));
+        polyItem->setBrush(QBrush(previewColor));
+        m_previewShape = polyItem;
+    }
+    else if (tool == Tool::Parallelogram) {
+        float x1 = qMin(m_shapeStartPos.x(), currentPos.x());
+        float y1 = qMin(m_shapeStartPos.y(), currentPos.y());
+        float x2 = qMax(m_shapeStartPos.x(), currentPos.x());
+        float y2 = qMax(m_shapeStartPos.y(), currentPos.y());
+        float width = x2 - x1;
+        float skew = width * 0.25f;  // 25% skew
+
+        QPolygonF poly;
+        poly << toScreen(QPointF(x1 + skew, y2));   // Top left
+        poly << toScreen(QPointF(x2, y2));          // Top right
+        poly << toScreen(QPointF(x2 - skew, y1));   // Bottom right
+        poly << toScreen(QPointF(x1, y1));          // Bottom left
+
+        QGraphicsPolygonItem *polyItem = new QGraphicsPolygonItem(poly);
+        polyItem->setPen(QPen(Qt::gray, 1, Qt::DashLine));
+        polyItem->setBrush(QBrush(previewColor));
+        m_previewShape = polyItem;
+    }
+    else if (tool == Tool::Arc) {
+        // Arc preview - draw as partial ellipse
+        QPointF delta = currentPos - m_shapeStartPos;
+        float radius = std::sqrt(delta.x()*delta.x() + delta.y()*delta.y());
+        float angle = std::atan2(delta.y(), delta.x()) * 180.0 / M_PI;
+
+        // Arc from 0 to drag angle
+        QPainterPath path;
+        QRectF rect(toScreen(m_shapeStartPos).x() - toScreen(radius),
+                   toScreen(m_shapeStartPos).y() - toScreen(radius),
+                   toScreen(radius) * 2, toScreen(radius) * 2);
+        path.arcMoveTo(rect, 0);
+        path.arcTo(rect, 0, -angle);  // Negative because Qt Y is inverted
+
+        QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
+        pathItem->setPen(QPen(Qt::gray, 2, Qt::DashLine));
+        m_previewShape = pathItem;
+    }
 
     if (m_previewShape) {
         addItem(m_previewShape);
@@ -831,5 +961,188 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         }
 
         emit statusMessage(QString("%1 created").arg(tool == Tool::Triangle ? "Triangle" : "Regular polygon"));
+    }
+    else if (tool == Tool::Star) {
+        int points = 5;  // 5-pointed star
+        QPointF delta = endPos - m_shapeStartPos;
+        float outerRadius = std::sqrt(delta.x()*delta.x() + delta.y()*delta.y());
+        float innerRadius = outerRadius * 0.4f;
+        float startAngle = std::atan2(delta.y(), delta.x());
+
+        Polygon *poly = m_document->addPolygon();
+
+        poly->setFillColor(defaults.fillColor);
+        poly->setStrokeColor(defaults.strokeColor);
+        poly->setLineWidth(defaults.lineWidth);
+        poly->setLineStyle(defaults.lineStyle);
+        poly->setLineCap(defaults.lineCap);
+        poly->setLineJoin(defaults.lineJoin);
+        poly->setFillPattern(defaults.fillPattern);
+        poly->setOpacity(defaults.opacity);
+        poly->setRotation(defaults.rotation);
+        poly->setScale(defaults.scale);
+
+        for (int i = 0; i < points * 2; i++) {
+            float angle = startAngle + M_PI * i / points;
+            float r = (i % 2 == 0) ? outerRadius : innerRadius;
+            QPointF pt = m_shapeStartPos + QPointF(r * std::cos(angle), r * std::sin(angle));
+            poly->addVertex(pt);
+        }
+
+        emit statusMessage("Star created");
+    }
+    else if (tool == Tool::Diamond) {
+        float dx = std::abs(endPos.x() - m_shapeStartPos.x());
+        float dy = std::abs(endPos.y() - m_shapeStartPos.y());
+
+        Polygon *poly = m_document->addPolygon();
+
+        poly->setFillColor(defaults.fillColor);
+        poly->setStrokeColor(defaults.strokeColor);
+        poly->setLineWidth(defaults.lineWidth);
+        poly->setLineStyle(defaults.lineStyle);
+        poly->setLineCap(defaults.lineCap);
+        poly->setLineJoin(defaults.lineJoin);
+        poly->setFillPattern(defaults.fillPattern);
+        poly->setOpacity(defaults.opacity);
+        poly->setRotation(defaults.rotation);
+        poly->setScale(defaults.scale);
+        poly->setDefaultCornerRadius(defaults.cornerRadius);
+
+        poly->addVertex(QPointF(m_shapeStartPos.x(), m_shapeStartPos.y() + dy));  // Top
+        poly->addVertex(QPointF(m_shapeStartPos.x() + dx, m_shapeStartPos.y()));  // Right
+        poly->addVertex(QPointF(m_shapeStartPos.x(), m_shapeStartPos.y() - dy));  // Bottom
+        poly->addVertex(QPointF(m_shapeStartPos.x() - dx, m_shapeStartPos.y()));  // Left
+
+        emit statusMessage("Diamond created");
+    }
+    else if (tool == Tool::Arrow) {
+        float dx = endPos.x() - m_shapeStartPos.x();
+        float dy = endPos.y() - m_shapeStartPos.y();
+        float length = std::sqrt(dx*dx + dy*dy);
+        if (length < 0.1f) return;  // Too small
+
+        float headWidth = length * 0.4f;
+        float headLength = length * 0.35f;
+        float shaftWidth = length * 0.15f;
+
+        float nx = dx / length;
+        float ny = dy / length;
+        float px = -ny;
+        float py = nx;
+
+        QPointF tip = endPos;
+        QPointF headBase = m_shapeStartPos + QPointF(nx * (length - headLength), ny * (length - headLength));
+        QPointF shaftEnd = m_shapeStartPos;
+
+        Polygon *poly = m_document->addPolygon();
+
+        poly->setFillColor(defaults.fillColor);
+        poly->setStrokeColor(defaults.strokeColor);
+        poly->setLineWidth(defaults.lineWidth);
+        poly->setLineStyle(defaults.lineStyle);
+        poly->setLineCap(defaults.lineCap);
+        poly->setLineJoin(defaults.lineJoin);
+        poly->setFillPattern(defaults.fillPattern);
+        poly->setOpacity(defaults.opacity);
+        poly->setRotation(defaults.rotation);
+        poly->setScale(defaults.scale);
+
+        poly->addVertex(tip);
+        poly->addVertex(headBase + QPointF(px * headWidth/2, py * headWidth/2));
+        poly->addVertex(headBase + QPointF(px * shaftWidth/2, py * shaftWidth/2));
+        poly->addVertex(shaftEnd + QPointF(px * shaftWidth/2, py * shaftWidth/2));
+        poly->addVertex(shaftEnd - QPointF(px * shaftWidth/2, py * shaftWidth/2));
+        poly->addVertex(headBase - QPointF(px * shaftWidth/2, py * shaftWidth/2));
+        poly->addVertex(headBase - QPointF(px * headWidth/2, py * headWidth/2));
+
+        emit statusMessage("Arrow created");
+    }
+    else if (tool == Tool::Trapezoid) {
+        float x1 = qMin(m_shapeStartPos.x(), endPos.x());
+        float y1 = qMin(m_shapeStartPos.y(), endPos.y());
+        float x2 = qMax(m_shapeStartPos.x(), endPos.x());
+        float y2 = qMax(m_shapeStartPos.y(), endPos.y());
+        float width = x2 - x1;
+        float inset = width * 0.2f;
+
+        Polygon *poly = m_document->addPolygon();
+
+        poly->setFillColor(defaults.fillColor);
+        poly->setStrokeColor(defaults.strokeColor);
+        poly->setLineWidth(defaults.lineWidth);
+        poly->setLineStyle(defaults.lineStyle);
+        poly->setLineCap(defaults.lineCap);
+        poly->setLineJoin(defaults.lineJoin);
+        poly->setFillPattern(defaults.fillPattern);
+        poly->setOpacity(defaults.opacity);
+        poly->setRotation(defaults.rotation);
+        poly->setScale(defaults.scale);
+        poly->setDefaultCornerRadius(defaults.cornerRadius);
+
+        poly->addVertex(QPointF(x1 + inset, y2));
+        poly->addVertex(QPointF(x2 - inset, y2));
+        poly->addVertex(QPointF(x2, y1));
+        poly->addVertex(QPointF(x1, y1));
+
+        emit statusMessage("Trapezoid created");
+    }
+    else if (tool == Tool::Parallelogram) {
+        float x1 = qMin(m_shapeStartPos.x(), endPos.x());
+        float y1 = qMin(m_shapeStartPos.y(), endPos.y());
+        float x2 = qMax(m_shapeStartPos.x(), endPos.x());
+        float y2 = qMax(m_shapeStartPos.y(), endPos.y());
+        float width = x2 - x1;
+        float skew = width * 0.25f;
+
+        Polygon *poly = m_document->addPolygon();
+
+        poly->setFillColor(defaults.fillColor);
+        poly->setStrokeColor(defaults.strokeColor);
+        poly->setLineWidth(defaults.lineWidth);
+        poly->setLineStyle(defaults.lineStyle);
+        poly->setLineCap(defaults.lineCap);
+        poly->setLineJoin(defaults.lineJoin);
+        poly->setFillPattern(defaults.fillPattern);
+        poly->setOpacity(defaults.opacity);
+        poly->setRotation(defaults.rotation);
+        poly->setScale(defaults.scale);
+        poly->setDefaultCornerRadius(defaults.cornerRadius);
+
+        poly->addVertex(QPointF(x1 + skew, y2));
+        poly->addVertex(QPointF(x2, y2));
+        poly->addVertex(QPointF(x2 - skew, y1));
+        poly->addVertex(QPointF(x1, y1));
+
+        emit statusMessage("Parallelogram created");
+    }
+    else if (tool == Tool::Arc) {
+        // For now, create arc as a curve with multiple points
+        QPointF delta = endPos - m_shapeStartPos;
+        float radius = std::sqrt(delta.x()*delta.x() + delta.y()*delta.y());
+        float endAngle = std::atan2(delta.y(), delta.x());
+
+        if (radius < 0.1f) return;
+
+        Curve *curve = m_document->addCurve();
+
+        curve->setColor(defaults.strokeColor);
+        curve->setLineWidth(defaults.lineWidth);
+        curve->setLineStyle(defaults.lineStyle);
+        curve->setLineCap(defaults.lineCap);
+        curve->setLineJoin(defaults.lineJoin);
+        curve->setRotation(defaults.rotation);
+        curve->setScale(defaults.scale);
+        curve->setCurveType(Curve::Smooth);
+
+        // Create arc from 0 to endAngle with multiple points
+        int segments = qMax(8, (int)(std::abs(endAngle) * 4));
+        for (int i = 0; i <= segments; i++) {
+            float angle = endAngle * i / segments;
+            QPointF pt = m_shapeStartPos + QPointF(radius * std::cos(angle), radius * std::sin(angle));
+            curve->addControlPoint(pt);
+        }
+
+        emit statusMessage("Arc created");
     }
 }
