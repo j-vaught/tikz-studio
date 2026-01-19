@@ -47,7 +47,9 @@ void ContextToolbar::setupWidgets() {
     m_lineWidthSpin->setFixedWidth(75);
     m_lineWidthSpin->setToolTip("Line/stroke width");
     connect(m_lineWidthSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-            this, &ContextToolbar::lineWidthChanged);
+            this, [this](double value) {
+        if (!m_updating) emit lineWidthChanged(value);
+    });
     addWidget(m_lineWidthSpin);
 
     addSeparator();
@@ -127,7 +129,9 @@ void ContextToolbar::setupWidgets() {
     m_rotationSpin->setFixedWidth(70);
     m_rotationSpin->setToolTip("Rotation angle");
     connect(m_rotationSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-            this, &ContextToolbar::rotationChanged);
+            this, [this](double value) {
+        if (!m_updating) emit rotationChanged(value);
+    });
     addWidget(m_rotationSpin);
 
     // Scale
@@ -142,7 +146,9 @@ void ContextToolbar::setupWidgets() {
     m_scaleSpin->setFixedWidth(65);
     m_scaleSpin->setToolTip("Scale factor");
     connect(m_scaleSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
-            this, &ContextToolbar::scaleChanged);
+            this, [this](double value) {
+        if (!m_updating) emit scaleChanged(value);
+    });
     addWidget(m_scaleSpin);
 }
 
