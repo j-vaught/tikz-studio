@@ -34,7 +34,7 @@ void PropertiesPanel::setupUI() {
 
     // Selection info
     m_selectionLabel = new QLabel("No selection");
-    m_selectionLabel->setStyleSheet("font-weight: bold; color: #73000a; padding: 4px;");
+    m_selectionLabel->setStyleSheet("font-weight: bold; color: #000000; padding: 4px;");
     m_mainLayout->addWidget(m_selectionLabel);
 
     // Common properties group

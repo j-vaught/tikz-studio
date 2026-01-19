@@ -12,36 +12,37 @@ ToolPalette::ToolPalette(QWidget *parent)
     setMovable(false);
     setIconSize(QSize(32, 32));
 
-    // Style the toolbar with UofSC colors
+    // Style the toolbar - clean black and white theme
     setStyleSheet(R"(
         QToolBar {
-            background-color: #f5f5f5;
-            border: 1px solid #cccccc;
+            background-color: #ffffff;
+            border: 1px solid #000000;
             spacing: 4px;
             padding: 4px;
         }
         QToolButton {
             background-color: #ffffff;
-            border: 2px solid #cccccc;
-            border-radius: 4px;
+            border: 2px solid #000000;
             padding: 8px;
             margin: 2px;
             font-weight: bold;
             font-size: 11px;
             min-width: 70px;
             min-height: 40px;
+            color: #000000;
         }
         QToolButton:hover {
-            background-color: #e8e8e8;
-            border-color: #73000a;
+            background-color: #e0e0e0;
+            border-color: #000000;
         }
         QToolButton:checked {
-            background-color: #73000a;
-            color: white;
-            border-color: #570008;
+            background-color: #000000;
+            color: #ffffff;
+            border-color: #000000;
         }
         QToolButton:pressed {
-            background-color: #570008;
+            background-color: #000000;
+            color: #ffffff;
         }
     )");
 
@@ -54,7 +55,7 @@ void ToolPalette::setupActions() {
 
     // Add section label
     QLabel *editLabel = new QLabel("  Edit");
-    editLabel->setStyleSheet("font-weight: bold; color: #73000a; padding: 4px;");
+    editLabel->setStyleSheet("font-weight: bold; color: #000000; padding: 4px;");
     addWidget(editLabel);
 
     // Select tool
@@ -70,7 +71,7 @@ void ToolPalette::setupActions() {
 
     // Drawing section
     QLabel *drawLabel = new QLabel("  Draw");
-    drawLabel->setStyleSheet("font-weight: bold; color: #73000a; padding: 4px;");
+    drawLabel->setStyleSheet("font-weight: bold; color: #000000; padding: 4px;");
     addWidget(drawLabel);
 
     // Point tool
@@ -109,7 +110,7 @@ void ToolPalette::setupActions() {
 
     // Shapes section
     QLabel *shapeLabel = new QLabel("  Shapes");
-    shapeLabel->setStyleSheet("font-weight: bold; color: #73000a; padding: 4px;");
+    shapeLabel->setStyleSheet("font-weight: bold; color: #000000; padding: 4px;");
     addWidget(shapeLabel);
 
     // Rectangle tool

@@ -35,30 +35,32 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle("TikZ Editor");
     resize(1400, 900);
 
-    // Apply global stylesheet for better contrast
+    // Apply global stylesheet - clean black and white theme
     setStyleSheet(R"(
         QMainWindow {
-            background-color: #f0f0f0;
+            background-color: #ffffff;
         }
         QMenuBar {
-            background-color: #73000a;
-            color: white;
+            background-color: #ffffff;
+            color: #000000;
+            border-bottom: 1px solid #000000;
             padding: 2px;
         }
         QMenuBar::item:selected {
-            background-color: #570008;
+            background-color: #000000;
+            color: #ffffff;
         }
         QMenu {
-            background-color: white;
-            border: 1px solid #73000a;
+            background-color: #ffffff;
+            border: 1px solid #000000;
         }
         QMenu::item:selected {
-            background-color: #73000a;
-            color: white;
+            background-color: #000000;
+            color: #ffffff;
         }
         QToolBar {
-            background-color: #f5f5f5;
-            border: 1px solid #cccccc;
+            background-color: #ffffff;
+            border: 1px solid #000000;
             spacing: 4px;
         }
         QDockWidget {
@@ -66,37 +68,68 @@ MainWindow::MainWindow(QWidget *parent)
             font-weight: bold;
         }
         QDockWidget::title {
-            background-color: #73000a;
-            color: white;
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #000000;
             padding: 6px;
             text-align: left;
         }
         QStatusBar {
-            background-color: #363636;
-            color: white;
+            background-color: #ffffff;
+            color: #000000;
+            border-top: 1px solid #000000;
         }
         QPushButton {
             background-color: #ffffff;
-            border: 2px solid #cccccc;
-            border-radius: 4px;
+            border: 2px solid #000000;
             padding: 6px 12px;
             font-weight: bold;
+            color: #000000;
         }
         QPushButton:hover {
-            background-color: #e8e8e8;
-            border-color: #73000a;
+            background-color: #e0e0e0;
+            border-color: #000000;
         }
         QPushButton:pressed {
-            background-color: #73000a;
-            color: white;
+            background-color: #000000;
+            color: #ffffff;
         }
         QSpinBox, QDoubleSpinBox {
-            border: 1px solid #cccccc;
-            border-radius: 3px;
+            background-color: #ffffff;
+            border: 1px solid #000000;
             padding: 4px;
+            color: #000000;
         }
         QSpinBox:focus, QDoubleSpinBox:focus {
-            border-color: #73000a;
+            border: 2px solid #000000;
+        }
+        QSlider::groove:horizontal {
+            border: 1px solid #000000;
+            height: 6px;
+            background: #ffffff;
+        }
+        QSlider::handle:horizontal {
+            background: #000000;
+            border: 1px solid #000000;
+            width: 14px;
+            margin: -4px 0;
+        }
+        QGroupBox {
+            border: 1px solid #000000;
+            margin-top: 8px;
+            padding-top: 8px;
+            font-weight: bold;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 8px;
+            padding: 0 4px;
+        }
+        QCheckBox {
+            color: #000000;
+        }
+        QLabel {
+            color: #000000;
         }
     )");
 
