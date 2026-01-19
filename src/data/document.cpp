@@ -166,6 +166,7 @@ QString Document::freshPointName() {
 QString Document::tikzPreamble() const {
     return R"(\documentclass[tikz,border=5pt]{standalone}
 \usepackage{tikz}
+\usetikzlibrary{patterns}
 
 % UofSC Color definitions
 \definecolor{garnet}{RGB}{115,0,10}
