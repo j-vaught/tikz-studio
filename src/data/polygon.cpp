@@ -149,6 +149,20 @@ void Polygon::setOpacity(float opacity) {
     }
 }
 
+void Polygon::setRotation(float degrees) {
+    if (m_rotation != degrees) {
+        m_rotation = degrees;
+        emit changed();
+    }
+}
+
+void Polygon::setScale(float scale) {
+    if (m_scale != scale) {
+        m_scale = qBound(0.1f, scale, 10.0f);
+        emit changed();
+    }
+}
+
 void Polygon::setDefaultCornerRadius(float radius) {
     if (m_defaultCornerRadius != radius) {
         m_defaultCornerRadius = radius;
@@ -375,6 +389,16 @@ QString Polygon::tikz() const {
     // Opacity
     if (m_opacity < 1.0f) {
         opts << QString("opacity=%1").arg(m_opacity, 0, 'f', 2);
+    }
+
+    // Rotation
+    if (m_rotation != 0.0f) {
+        opts << QString("rotate=%1").arg(m_rotation, 0, 'f', 1);
+    }
+
+    // Scale
+    if (m_scale != 1.0f) {
+        opts << QString("scale=%1").arg(m_scale, 0, 'f', 2);
     }
 
     QString optStr = opts.isEmpty() ? "" : QString("[%1]").arg(opts.join(", "));

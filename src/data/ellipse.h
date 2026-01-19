@@ -28,9 +28,12 @@ public:
     void setRadius(float r) { setRadiusX(r); setRadiusY(r); }
     bool isCircle() const { return qFuzzyCompare(m_radiusX, m_radiusY); }
 
-    // Rotation (degrees)
+    // Transform
     float rotation() const { return m_rotation; }
     void setRotation(float degrees);
+
+    float scale() const { return m_scale; }
+    void setScale(float scale);
 
     // Appearance
     QColor fillColor() const { return m_fillColor; }
@@ -68,6 +71,7 @@ private:
     float m_radiusX = 1.0f;
     float m_radiusY = 1.0f;
     float m_rotation = 0.0f;
+    float m_scale = 1.0f;
 
     QColor m_fillColor;
     QColor m_strokeColor;

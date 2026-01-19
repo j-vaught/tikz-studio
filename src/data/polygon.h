@@ -64,6 +64,13 @@ public:
     float opacity() const { return m_opacity; }
     void setOpacity(float opacity);
 
+    // Transform
+    float rotation() const { return m_rotation; }
+    void setRotation(float degrees);
+
+    float scale() const { return m_scale; }
+    void setScale(float scale);
+
     // Global corner radius (applies to vertices with radius=0)
     float defaultCornerRadius() const { return m_defaultCornerRadius; }
     void setDefaultCornerRadius(float radius);
@@ -91,6 +98,8 @@ private:
     LineCap m_lineCap = LineCap::Butt;
     LineJoin m_lineJoin = LineJoin::Miter;
     float m_opacity = 1.0f;
+    float m_rotation = 0.0f;
+    float m_scale = 1.0f;
     float m_defaultCornerRadius = 0.0f;
 };
 

@@ -18,6 +18,7 @@ class CurveItem;
 class EllipseItem;
 class ToolPalette;
 class ColorPalette;
+class PropertiesPanel;
 
 class Canvas : public QGraphicsScene {
     Q_OBJECT
@@ -29,6 +30,7 @@ public:
 
     void setToolPalette(ToolPalette *tools) { m_tools = tools; }
     void setColorPalette(ColorPalette *colors) { m_colors = colors; }
+    void setPropertiesPanel(PropertiesPanel *props) { m_propertiesPanel = props; }
 
     // Number of sides for regular polygon tool
     int regularPolygonSides() const { return m_regPolySides; }
@@ -89,6 +91,7 @@ private:
     Document *m_document;
     ToolPalette *m_tools = nullptr;
     ColorPalette *m_colors = nullptr;
+    PropertiesPanel *m_propertiesPanel = nullptr;
 
     QMap<Point*, PointItem*> m_pointItems;
     QMap<Line*, LineItem*> m_lineItems;

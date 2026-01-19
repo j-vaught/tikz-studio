@@ -36,6 +36,13 @@ void Ellipse::setRotation(float degrees) {
     }
 }
 
+void Ellipse::setScale(float scale) {
+    if (m_scale != scale) {
+        m_scale = qBound(0.1f, scale, 10.0f);
+        emit changed();
+    }
+}
+
 void Ellipse::setFillColor(const QColor &color) {
     if (m_fillColor != color) {
         m_fillColor = color;
@@ -220,6 +227,11 @@ QString Ellipse::tikz() const {
     // Rotation
     if (m_rotation != 0.0f) {
         opts << QString("rotate=%1").arg(m_rotation, 0, 'f', 1);
+    }
+
+    // Scale
+    if (m_scale != 1.0f) {
+        opts << QString("scale=%1").arg(m_scale, 0, 'f', 2);
     }
 
     QString optStr = opts.isEmpty() ? "" : QString("[%1]").arg(opts.join(", "));

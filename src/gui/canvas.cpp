@@ -12,6 +12,7 @@
 #include "ellipseitem.h"
 #include "toolpalette.h"
 #include "colorpalette.h"
+#include "propertiespanel.h"
 
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsSceneContextMenuEvent>
@@ -540,9 +541,18 @@ void Canvas::handleLineTool(QGraphicsSceneMouseEvent *event) {
 
         Line *line = m_document->addLine(m_lineStartPos, tikzPos);
 
-        if (m_colors) {
-            line->setColor(m_colors->currentColor());
+        // Apply defaults from properties panel
+        DrawingDefaults defaults;
+        if (m_propertiesPanel) {
+            defaults = m_propertiesPanel->drawingDefaults();
         }
+        line->setColor(defaults.strokeColor);
+        line->setLineWidth(defaults.lineWidth);
+        line->setLineStyle(defaults.lineStyle);
+        line->setLineCap(defaults.lineCap);
+        line->setLineJoin(defaults.lineJoin);
+        line->setRotation(defaults.rotation);
+        line->setScale(defaults.scale);
 
         emit statusMessage("Line created");
     }
@@ -555,9 +565,24 @@ void Canvas::handlePolygonTool(QGraphicsSceneMouseEvent *event) {
 
         if (!m_currentPolygon) {
             m_currentPolygon = m_document->addPolygon();
-            if (m_colors) {
-                m_currentPolygon->setFillColor(m_colors->currentColor());
+
+            // Apply defaults from properties panel
+            DrawingDefaults defaults;
+            if (m_propertiesPanel) {
+                defaults = m_propertiesPanel->drawingDefaults();
             }
+            m_currentPolygon->setFillColor(defaults.fillColor);
+            m_currentPolygon->setStrokeColor(defaults.strokeColor);
+            m_currentPolygon->setLineWidth(defaults.lineWidth);
+            m_currentPolygon->setLineStyle(defaults.lineStyle);
+            m_currentPolygon->setLineCap(defaults.lineCap);
+            m_currentPolygon->setLineJoin(defaults.lineJoin);
+            m_currentPolygon->setFillPattern(defaults.fillPattern);
+            m_currentPolygon->setOpacity(defaults.opacity);
+            m_currentPolygon->setRotation(defaults.rotation);
+            m_currentPolygon->setScale(defaults.scale);
+            m_currentPolygon->setDefaultCornerRadius(defaults.cornerRadius);
+
             emit statusMessage("Polygon: adding vertices (right-click or Enter to finish)");
         }
 
@@ -585,9 +610,21 @@ void Canvas::handleCurveTool(QGraphicsSceneMouseEvent *event) {
 
         if (!m_currentCurve) {
             m_currentCurve = m_document->addCurve();
-            if (m_colors) {
-                m_currentCurve->setColor(m_colors->currentColor());
+
+            // Apply defaults from properties panel
+            DrawingDefaults defaults;
+            if (m_propertiesPanel) {
+                defaults = m_propertiesPanel->drawingDefaults();
             }
+            m_currentCurve->setColor(defaults.strokeColor);
+            m_currentCurve->setLineWidth(defaults.lineWidth);
+            m_currentCurve->setLineStyle(defaults.lineStyle);
+            m_currentCurve->setLineCap(defaults.lineCap);
+            m_currentCurve->setLineJoin(defaults.lineJoin);
+            m_currentCurve->setTension(defaults.curveTension);
+            m_currentCurve->setRotation(defaults.rotation);
+            m_currentCurve->setScale(defaults.scale);
+
             emit statusMessage("Curve: adding control points (right-click or Enter to finish)");
         }
 
@@ -691,11 +728,28 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
     endPos = snapToGrid(endPos, GRID_MINOR);
 
     Tool tool = m_tools->currentTool();
-    QColor fillColor = m_colors ? m_colors->currentColor() : UofSC::Garnet();
+
+    // Get defaults from properties panel, or use fallbacks
+    DrawingDefaults defaults;
+    if (m_propertiesPanel) {
+        defaults = m_propertiesPanel->drawingDefaults();
+    }
 
     if (tool == Tool::Rectangle) {
         Polygon *poly = m_document->addPolygon();
-        poly->setFillColor(fillColor);
+
+        // Apply all defaults
+        poly->setFillColor(defaults.fillColor);
+        poly->setStrokeColor(defaults.strokeColor);
+        poly->setLineWidth(defaults.lineWidth);
+        poly->setLineStyle(defaults.lineStyle);
+        poly->setLineCap(defaults.lineCap);
+        poly->setLineJoin(defaults.lineJoin);
+        poly->setFillPattern(defaults.fillPattern);
+        poly->setOpacity(defaults.opacity);
+        poly->setRotation(defaults.rotation);
+        poly->setScale(defaults.scale);
+        poly->setDefaultCornerRadius(defaults.cornerRadius);
 
         float x1 = qMin(m_shapeStartPos.x(), endPos.x());
         float y1 = qMin(m_shapeStartPos.y(), endPos.y());
@@ -714,7 +768,18 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         float radius = std::sqrt(delta.x()*delta.x() + delta.y()*delta.y());
 
         Ellipse *ellipse = m_document->addCircle(m_shapeStartPos, radius);
-        ellipse->setFillColor(fillColor);
+
+        // Apply all defaults
+        ellipse->setFillColor(defaults.fillColor);
+        ellipse->setStrokeColor(defaults.strokeColor);
+        ellipse->setLineWidth(defaults.lineWidth);
+        ellipse->setLineStyle(defaults.lineStyle);
+        ellipse->setLineCap(defaults.lineCap);
+        ellipse->setLineJoin(defaults.lineJoin);
+        ellipse->setFillPattern(defaults.fillPattern);
+        ellipse->setOpacity(defaults.opacity);
+        ellipse->setRotation(defaults.rotation);
+        ellipse->setScale(defaults.scale);
 
         emit statusMessage("Circle created");
     }
@@ -723,7 +788,18 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         float ry = std::abs(endPos.y() - m_shapeStartPos.y());
 
         Ellipse *ellipse = m_document->addEllipse(m_shapeStartPos, rx, ry);
-        ellipse->setFillColor(fillColor);
+
+        // Apply all defaults
+        ellipse->setFillColor(defaults.fillColor);
+        ellipse->setStrokeColor(defaults.strokeColor);
+        ellipse->setLineWidth(defaults.lineWidth);
+        ellipse->setLineStyle(defaults.lineStyle);
+        ellipse->setLineCap(defaults.lineCap);
+        ellipse->setLineJoin(defaults.lineJoin);
+        ellipse->setFillPattern(defaults.fillPattern);
+        ellipse->setOpacity(defaults.opacity);
+        ellipse->setRotation(defaults.rotation);
+        ellipse->setScale(defaults.scale);
 
         emit statusMessage("Ellipse created");
     }
@@ -734,7 +810,19 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         float startAngle = std::atan2(delta.y(), delta.x());
 
         Polygon *poly = m_document->addPolygon();
-        poly->setFillColor(fillColor);
+
+        // Apply all defaults
+        poly->setFillColor(defaults.fillColor);
+        poly->setStrokeColor(defaults.strokeColor);
+        poly->setLineWidth(defaults.lineWidth);
+        poly->setLineStyle(defaults.lineStyle);
+        poly->setLineCap(defaults.lineCap);
+        poly->setLineJoin(defaults.lineJoin);
+        poly->setFillPattern(defaults.fillPattern);
+        poly->setOpacity(defaults.opacity);
+        poly->setRotation(defaults.rotation);
+        poly->setScale(defaults.scale);
+        poly->setDefaultCornerRadius(defaults.cornerRadius);
 
         for (int i = 0; i < sides; i++) {
             float angle = startAngle + 2.0 * M_PI * i / sides;

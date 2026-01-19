@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "common.h"
 
 class Document;
 class Canvas;
@@ -59,6 +60,7 @@ private slots:
     void onFillPatternChanged(int pattern);
     void onRotationChanged(double angle);
     void onScaleChanged(double scale);
+    void onToolChanged(Tool tool);
 
 private:
     void setupMenus();

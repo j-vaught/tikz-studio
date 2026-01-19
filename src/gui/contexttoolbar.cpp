@@ -223,6 +223,8 @@ void ContextToolbar::updateForSelection(const QList<QGraphicsItem*> &items) {
         m_currentStrokeColor = line->color();
         updateColorButton(m_strokeColorBtn, m_currentStrokeColor);
         m_lineStyleCombo->setCurrentIndex(line->isDashed() ? 1 : 0);
+        m_rotationSpin->setValue(line->rotation());
+        m_scaleSpin->setValue(line->scale());
     } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
         m_selectionLabel->setText("Polygon");
         Polygon *poly = pi->polygon();
@@ -243,6 +245,9 @@ void ContextToolbar::updateForSelection(const QList<QGraphicsItem*> &items) {
         // Set fill pattern combo
         int fillPatternIdx = m_fillPatternCombo->findData(static_cast<int>(poly->fillPattern()));
         if (fillPatternIdx >= 0) m_fillPatternCombo->setCurrentIndex(fillPatternIdx);
+        // Set rotation and scale
+        m_rotationSpin->setValue(poly->rotation());
+        m_scaleSpin->setValue(poly->scale());
     } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
         m_selectionLabel->setText("Curve");
         Curve *curve = ci->curve();
@@ -250,6 +255,8 @@ void ContextToolbar::updateForSelection(const QList<QGraphicsItem*> &items) {
         m_currentStrokeColor = curve->color();
         updateColorButton(m_strokeColorBtn, m_currentStrokeColor);
         m_lineStyleCombo->setCurrentIndex(curve->isDashed() ? 1 : 0);
+        m_rotationSpin->setValue(curve->rotation());
+        m_scaleSpin->setValue(curve->scale());
     } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
         Ellipse *ellipse = ei->ellipse();
         m_selectionLabel->setText(ellipse->isCircle() ? "Circle" : "Ellipse");
@@ -259,6 +266,7 @@ void ContextToolbar::updateForSelection(const QList<QGraphicsItem*> &items) {
         updateColorButton(m_strokeColorBtn, m_currentStrokeColor);
         updateColorButton(m_fillColorBtn, m_currentFillColor);
         m_rotationSpin->setValue(ellipse->rotation());
+        m_scaleSpin->setValue(ellipse->scale());
         // Set line style combo
         int lineStyleIdx = m_lineStyleCombo->findData(static_cast<int>(ellipse->lineStyle()));
         if (lineStyleIdx >= 0) m_lineStyleCombo->setCurrentIndex(lineStyleIdx);

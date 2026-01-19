@@ -7,6 +7,7 @@
 #include <QVector>
 #include <QPainterPath>
 #include <QString>
+#include "common.h"
 
 class Point;
 
@@ -47,11 +48,28 @@ public:
     float lineWidth() const { return m_lineWidth; }
     void setLineWidth(float width);
 
-    bool isDashed() const { return m_dashed; }
-    void setDashed(bool dashed);
+    LineStyle lineStyle() const { return m_lineStyle; }
+    void setLineStyle(LineStyle style);
+
+    LineCap lineCap() const { return m_lineCap; }
+    void setLineCap(LineCap cap);
+
+    LineJoin lineJoin() const { return m_lineJoin; }
+    void setLineJoin(LineJoin join);
+
+    // For backwards compatibility
+    bool isDashed() const { return m_lineStyle != LineStyle::Solid; }
+    void setDashed(bool dashed) { setLineStyle(dashed ? LineStyle::Dashed : LineStyle::Solid); }
 
     bool isClosed() const { return m_closed; }
     void setClosed(bool closed);
+
+    // Transform
+    float rotation() const { return m_rotation; }
+    void setRotation(float degrees);
+
+    float scale() const { return m_scale; }
+    void setScale(float scale);
 
     // Qt painter path (for rendering in canvas)
     QPainterPath painterPath() const;
@@ -74,7 +92,11 @@ private:
     float m_tension = 0.5f;
     QColor m_color;
     float m_lineWidth = 0.8f;
-    bool m_dashed = false;
+    float m_rotation = 0.0f;
+    float m_scale = 1.0f;
+    LineStyle m_lineStyle = LineStyle::Solid;
+    LineCap m_lineCap = LineCap::Butt;
+    LineJoin m_lineJoin = LineJoin::Miter;
     bool m_closed = false;
 };
 

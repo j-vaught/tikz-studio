@@ -29,6 +29,7 @@ void EllipseItem::updateFromModel() {
     setRect(-rx, -ry, rx * 2, ry * 2);
     setPos(center);
     setRotation(m_ellipse->rotation());
+    setScale(m_ellipse->scale());
 
     // Stroke
     QPen pen(m_ellipse->strokeColor());

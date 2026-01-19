@@ -108,9 +108,23 @@ void Curve::setLineWidth(float width) {
     }
 }
 
-void Curve::setDashed(bool dashed) {
-    if (m_dashed != dashed) {
-        m_dashed = dashed;
+void Curve::setLineStyle(LineStyle style) {
+    if (m_lineStyle != style) {
+        m_lineStyle = style;
+        emit changed();
+    }
+}
+
+void Curve::setLineCap(LineCap cap) {
+    if (m_lineCap != cap) {
+        m_lineCap = cap;
+        emit changed();
+    }
+}
+
+void Curve::setLineJoin(LineJoin join) {
+    if (m_lineJoin != join) {
+        m_lineJoin = join;
         emit changed();
     }
 }
@@ -118,6 +132,20 @@ void Curve::setDashed(bool dashed) {
 void Curve::setClosed(bool closed) {
     if (m_closed != closed) {
         m_closed = closed;
+        emit changed();
+    }
+}
+
+void Curve::setRotation(float degrees) {
+    if (m_rotation != degrees) {
+        m_rotation = degrees;
+        emit changed();
+    }
+}
+
+void Curve::setScale(float scale) {
+    if (m_scale != scale) {
+        m_scale = qBound(0.1f, scale, 10.0f);
         emit changed();
     }
 }
@@ -206,6 +234,40 @@ static QString colorToTikz(const QColor &color) {
         .arg(color.red()).arg(color.green()).arg(color.blue());
 }
 
+static QString lineStyleToTikz(LineStyle style) {
+    switch (style) {
+        case LineStyle::Dashed: return "dashed";
+        case LineStyle::DenselyDashed: return "densely dashed";
+        case LineStyle::LooselyDashed: return "loosely dashed";
+        case LineStyle::Dotted: return "dotted";
+        case LineStyle::DenselyDotted: return "densely dotted";
+        case LineStyle::LooselyDotted: return "loosely dotted";
+        case LineStyle::DashDot: return "dashdotted";
+        case LineStyle::DenselyDashDot: return "densely dashdotted";
+        case LineStyle::LooselyDashDot: return "loosely dashdotted";
+        case LineStyle::DashDotDot: return "dashdotdotted";
+        case LineStyle::DenselyDashDotDot: return "densely dashdotdotted";
+        case LineStyle::LooselyDashDotDot: return "loosely dashdotdotted";
+        default: return QString();
+    }
+}
+
+static QString lineCapToTikz(LineCap cap) {
+    switch (cap) {
+        case LineCap::Round: return "line cap=round";
+        case LineCap::Square: return "line cap=rect";
+        default: return QString();
+    }
+}
+
+static QString lineJoinToTikz(LineJoin join) {
+    switch (join) {
+        case LineJoin::Round: return "line join=round";
+        case LineJoin::Bevel: return "line join=bevel";
+        default: return QString();
+    }
+}
+
 QString Curve::tikz() const {
     QVector<QPointF> pts = controlPoints();
     if (pts.size() < 2) return QString();
@@ -222,9 +284,32 @@ QString Curve::tikz() const {
         opts << QString("line width=%1pt").arg(m_lineWidth, 0, 'f', 1);
     }
 
-    // Dashed
-    if (m_dashed) {
-        opts << "dashed";
+    // Line style
+    QString lineStyleStr = lineStyleToTikz(m_lineStyle);
+    if (!lineStyleStr.isEmpty()) {
+        opts << lineStyleStr;
+    }
+
+    // Line cap
+    QString lineCapStr = lineCapToTikz(m_lineCap);
+    if (!lineCapStr.isEmpty()) {
+        opts << lineCapStr;
+    }
+
+    // Line join
+    QString lineJoinStr = lineJoinToTikz(m_lineJoin);
+    if (!lineJoinStr.isEmpty()) {
+        opts << lineJoinStr;
+    }
+
+    // Rotation
+    if (m_rotation != 0.0f) {
+        opts << QString("rotate=%1").arg(m_rotation, 0, 'f', 1);
+    }
+
+    // Scale
+    if (m_scale != 1.0f) {
+        opts << QString("scale=%1").arg(m_scale, 0, 'f', 2);
     }
 
     QString optStr = opts.isEmpty() ? "" : QString("[%1]").arg(opts.join(", "));

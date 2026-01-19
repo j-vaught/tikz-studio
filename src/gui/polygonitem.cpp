@@ -23,7 +23,17 @@ void PolygonItem::updateFromModel() {
     if (!m_polygon) return;
 
     // Use the polygon's painterPath which handles rounded corners
-    setPath(m_polygon->painterPath());
+    QPainterPath path = m_polygon->painterPath();
+    setPath(path);
+
+    // Calculate centroid for transform origin
+    QRectF bounds = path.boundingRect();
+    QPointF center = bounds.center();
+    setTransformOriginPoint(center);
+
+    // Apply rotation and scale
+    setRotation(m_polygon->rotation());
+    setScale(m_polygon->scale());
 
     // Stroke
     QPen pen(m_polygon->strokeColor());

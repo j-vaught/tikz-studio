@@ -229,6 +229,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Create properties panel
     m_propertiesPanel = new PropertiesPanel(this);
+    m_canvas->setPropertiesPanel(m_propertiesPanel);
 
     setupMenus();
     setupToolbars();
@@ -367,6 +368,29 @@ void MainWindow::setupToolbars() {
             this, &MainWindow::onRotationChanged);
     connect(m_contextToolbar, &ContextToolbar::scaleChanged,
             this, &MainWindow::onScaleChanged);
+
+    // Connect tool palette to properties panel
+    connect(m_toolPalette, &ToolPalette::toolChanged, this, &MainWindow::onToolChanged);
+
+    // Two-way sync: context toolbar -> properties panel
+    connect(m_contextToolbar, &ContextToolbar::lineWidthChanged,
+            m_propertiesPanel, &PropertiesPanel::setLineWidth);
+    connect(m_contextToolbar, &ContextToolbar::strokeColorChanged,
+            m_propertiesPanel, &PropertiesPanel::setStrokeColor);
+    connect(m_contextToolbar, &ContextToolbar::fillColorChanged,
+            m_propertiesPanel, &PropertiesPanel::setFillColor);
+    connect(m_contextToolbar, &ContextToolbar::lineStyleChanged,
+            m_propertiesPanel, &PropertiesPanel::setLineStyle);
+    connect(m_contextToolbar, &ContextToolbar::lineCapChanged,
+            m_propertiesPanel, &PropertiesPanel::setLineCap);
+    connect(m_contextToolbar, &ContextToolbar::lineJoinChanged,
+            m_propertiesPanel, &PropertiesPanel::setLineJoin);
+    connect(m_contextToolbar, &ContextToolbar::fillPatternChanged,
+            m_propertiesPanel, &PropertiesPanel::setFillPattern);
+    connect(m_contextToolbar, &ContextToolbar::rotationChanged,
+            m_propertiesPanel, &PropertiesPanel::setRotation);
+    connect(m_contextToolbar, &ContextToolbar::scaleChanged,
+            m_propertiesPanel, &PropertiesPanel::setScale);
 
     // Tool palette on the left
     addToolBar(Qt::LeftToolBarArea, m_toolPalette);
@@ -775,11 +799,30 @@ void MainWindow::onRotationChanged(double angle) {
     for (QGraphicsItem *item : m_canvas->selectedItems()) {
         if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
             ei->ellipse()->setRotation(angle);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setRotation(angle);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            li->line()->setRotation(angle);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            ci->curve()->setRotation(angle);
         }
     }
 }
 
 void MainWindow::onScaleChanged(double scale) {
-    // TODO: Implement scale support - would need to modify shape dimensions
-    Q_UNUSED(scale);
+    for (QGraphicsItem *item : m_canvas->selectedItems()) {
+        if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            ei->ellipse()->setScale(scale);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            pi->polygon()->setScale(scale);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            li->line()->setScale(scale);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            ci->curve()->setScale(scale);
+        }
+    }
+}
+
+void MainWindow::onToolChanged(Tool tool) {
+    m_propertiesPanel->setCurrentTool(tool);
 }
