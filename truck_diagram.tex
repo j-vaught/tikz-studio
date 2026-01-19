@@ -1,0 +1,134 @@
+\documentclass[tikz,border=5pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{patterns}
+
+% UofSC Color definitions
+\definecolor{garnet}{RGB}{115,0,10}
+\definecolor{rose}{RGB}{204,46,64}
+\definecolor{atlantic}{RGB}{70,106,159}
+\definecolor{congaree}{RGB}{31,65,77}
+\definecolor{horseshoe}{RGB}{101,120,11}
+\definecolor{grass}{RGB}{206,211,24}
+\definecolor{honeycomb}{RGB}{164,145,55}
+\definecolor{darkgarnet}{RGB}{87,0,8}
+\definecolor{azalea}{RGB}{132,66,71}
+
+\begin{document}
+
+\begin{tikzpicture}
+
+  % === LAYER 1: Background shapes (draw first, appear behind) ===
+
+  % Yellow chassis/frame
+  \filldraw[fill={rgb,255:red,255;green,251;blue,0}, draw=black, line width=4.0pt]
+    (58.250,6.000) -- (57.500,5.500) -- (48.750,5.500) -- (46.750,4.750) --
+    (16.250,4.750) -- (11.250,7.250) -- (3.250,7.250) -- (3.000,12.000) --
+    (16.250,12.250) -- (18.000,10.000) -- (37.750,10.000) -- (41.250,12.500) --
+    (58.250,12.500) -- cycle;
+
+  % === LAYER 2: Wheels (green circles) ===
+
+  % Front wheel outer
+  \filldraw[fill={rgb,255:red,0;green,249;blue,0}, draw=black, line width=4.0pt]
+    (9.750,5.500) circle (4.776);
+  % Front wheel inner
+  \filldraw[fill={rgb,255:red,0;green,249;blue,0}, draw=black, line width=4.0pt]
+    (9.750,5.500) circle (2.550);
+
+  % Rear wheel outer
+  \filldraw[fill={rgb,255:red,0;green,249;blue,0}, draw=black, line width=4.0pt]
+    (48.750,5.250) circle (5.025);
+  % Rear wheel inner
+  \filldraw[fill={rgb,255:red,0;green,249;blue,0}, draw=black, line width=4.0pt]
+    (48.750,5.250) circle (2.761);
+
+  % === LAYER 3: Cab body (garnet) ===
+
+  % Main cab body - left side
+  \filldraw[fill=garnet, draw=black, line width=4.0pt]
+    (34.750,6.000) -- (34.517,22.800) .. controls (34.500,24.000) .. (33.300,23.973) --
+    (24.550,23.779) .. controls (23.250,23.750) .. (22.452,22.724) --
+    (18.860,18.105) .. controls (18.000,17.000) .. (16.610,16.834) --
+    (2.342,15.130) .. controls (1.250,15.000) .. (1.250,13.900) --
+    (1.250,6.750) -- (3.250,6.750) .. controls (4.250,6.750) .. (4.300,7.749) --
+    (4.375,9.250) .. controls (4.500,11.750) .. (7.003,11.750) --
+    (12.050,11.750) .. controls (14.250,11.750) .. (14.973,9.672) --
+    (15.921,6.944) .. controls (16.250,6.000) .. (17.250,6.000) -- cycle;
+
+  % Cab body - right/trailer section
+  \filldraw[fill=garnet, draw=black, line width=4.0pt]
+    (35.650,16.750) .. controls (35.250,16.750) .. (35.250,16.350) --
+    (35.250,7.550) .. controls (35.250,7.250) .. (35.550,7.240) --
+    (41.551,7.040) .. controls (42.750,7.000) .. (42.937,8.185) --
+    (43.141,9.478) .. controls (43.500,11.750) .. (45.800,11.750) --
+    (51.750,11.750) .. controls (53.750,11.750) .. (54.235,9.810) --
+    (54.483,8.817) .. controls (54.750,7.750) .. (55.845,7.859) --
+    (61.653,8.440) .. controls (62.250,8.500) .. (62.473,9.057) --
+    (62.704,9.634) .. controls (62.750,9.750) .. (62.750,9.875) --
+    (62.750,9.875) .. controls (62.750,10.000) .. (62.750,10.125) --
+    (62.750,13.500) .. controls (62.750,14.000) .. (62.629,14.485) --
+    (62.625,14.500) .. controls (62.500,15.000) .. (62.427,15.510) --
+    (62.335,16.156) .. controls (62.250,16.750) .. (61.650,16.750) -- cycle;
+
+  % === LAYER 4: Window area (green background) ===
+
+  \filldraw[fill={rgb,255:red,0;green,249;blue,0}, draw=black, line width=4.0pt]
+    (31.550,22.784) .. controls (32.750,22.750) .. (32.750,21.550) --
+    (32.750,6.850) .. controls (32.750,6.750) .. (32.650,6.750) --
+    (20.250,6.750) .. controls (19.750,6.750) .. (19.703,7.248) --
+    (19.476,9.623) .. controls (19.250,12.000) .. (19.500,14.375) --
+    (19.656,15.855) .. controls (19.750,16.750) .. (20.256,17.494) --
+    (23.100,21.677) .. controls (24.000,23.000) .. (25.599,22.954) -- cycle;
+
+  % === LAYER 5: Windows (cyan) ===
+
+  % Main window
+  \filldraw[fill={rgb,255:red,0;green,253;blue,255}, draw=black, line width=4.0pt]
+    (30.900,22.250) .. controls (32.000,22.250) .. (32.000,21.150) --
+    (32.000,17.850) .. controls (32.000,16.750) .. (30.900,16.750) --
+    (22.150,16.750) .. controls (20.250,16.750) .. (21.412,18.253) --
+    (23.950,21.538) .. controls (24.500,22.250) .. (25.400,22.250) -- cycle;
+
+  % Small window/mirror
+  \filldraw[fill={rgb,255:red,0;green,253;blue,255}, draw=black, line width=4.0pt]
+    (22.750,23.000) -- (23.000,22.875) .. controls (23.250,22.750) .. (23.087,22.523) --
+    (19.077,16.954) .. controls (18.750,16.500) .. (18.250,16.750) --
+    (17.839,16.955) .. controls (17.750,17.000) .. (17.814,17.077) -- cycle;
+
+  % === LAYER 6: Details (black parts) ===
+
+  % Exhaust/detail 1
+  \filldraw[fill=black, draw=black, line width=4.0pt]
+    (63.000,9.250) .. controls (63.750,9.250) .. (63.750,8.500) --
+    (63.750,8.104) .. controls (63.750,7.750) .. (63.500,7.500) --
+    (63.500,7.500) .. controls (63.250,7.250) .. (62.896,7.250) --
+    (62.450,7.250) .. controls (61.750,7.250) .. (61.663,7.945) --
+    (61.625,8.250) .. controls (61.500,9.250) .. (62.508,9.250) -- cycle;
+
+  % Exhaust/detail 2
+  \filldraw[fill=black, draw=black, line width=4.0pt]
+    (61.500,13.100) .. controls (61.500,13.500) .. (61.900,13.500) --
+    (62.250,13.500) .. controls (62.750,13.500) .. (62.795,13.002) --
+    (62.973,11.049) .. controls (63.000,10.750) .. (62.700,10.750) --
+    (61.875,10.750) .. controls (61.750,10.750) .. (61.625,10.750) --
+    (61.625,10.750) .. controls (61.500,10.750) .. (61.500,10.875) -- cycle;
+
+  % Mirror/detail on front
+  \filldraw[fill=black, draw=black, line width=4.0pt]
+    (3.000,8.600) .. controls (3.000,9.000) .. (2.602,9.036) --
+    (0.872,9.193) .. controls (0.250,9.250) .. (0.250,8.625) --
+    (0.250,8.500) .. controls (0.250,8.000) .. (0.474,7.553) --
+    (0.776,6.947) .. controls (1.000,6.500) .. (1.500,6.500) --
+    (2.500,6.500) .. controls (3.000,6.500) .. (3.000,7.000) -- cycle;
+
+  % === LAYER 7: Lines (draw last, on top) ===
+
+  % Horizontal line across
+  \draw[line width=4.0pt] (2.250,13.750) -- (62.750,14.000);
+
+  % Upper line
+  \draw[line width=4.0pt] (61.750,15.500) -- (35.500,15.500);
+
+\end{tikzpicture}
+
+\end{document}

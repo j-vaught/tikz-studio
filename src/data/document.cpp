@@ -24,6 +24,7 @@ Point *Document::addPoint(QPointF pos) {
     Point *p = new Point(pos, this);
     p->setName(freshPointName());
     m_points.append(p);
+    m_shapeOrder.append({ShapeType::Point, p});
     connect(p, &Point::changed, this, &Document::changed);
     emit changed();
     return p;
@@ -33,6 +34,13 @@ void Document::removePoint(Point *point) {
     int idx = m_points.indexOf(point);
     if (idx >= 0) {
         m_points.remove(idx);
+        // Remove from shape order
+        for (int i = 0; i < m_shapeOrder.size(); ++i) {
+            if (m_shapeOrder[i].ptr == point) {
+                m_shapeOrder.remove(i);
+                break;
+            }
+        }
         point->deleteLater();
         emit changed();
     }
@@ -41,6 +49,7 @@ void Document::removePoint(Point *point) {
 Line *Document::addLine(QPointF start, QPointF end) {
     Line *l = new Line(start, end, this);
     m_lines.append(l);
+    m_shapeOrder.append({ShapeType::Line, l});
     connect(l, &Line::changed, this, &Document::changed);
     emit changed();
     return l;
@@ -49,6 +58,7 @@ Line *Document::addLine(QPointF start, QPointF end) {
 Line *Document::addLine(Point *start, Point *end) {
     Line *l = new Line(start, end, this);
     m_lines.append(l);
+    m_shapeOrder.append({ShapeType::Line, l});
     connect(l, &Line::changed, this, &Document::changed);
     emit changed();
     return l;
@@ -58,6 +68,12 @@ void Document::removeLine(Line *line) {
     int idx = m_lines.indexOf(line);
     if (idx >= 0) {
         m_lines.remove(idx);
+        for (int i = 0; i < m_shapeOrder.size(); ++i) {
+            if (m_shapeOrder[i].ptr == line) {
+                m_shapeOrder.remove(i);
+                break;
+            }
+        }
         line->deleteLater();
         emit changed();
     }
@@ -66,6 +82,7 @@ void Document::removeLine(Line *line) {
 Polygon *Document::addPolygon() {
     Polygon *p = new Polygon(this);
     m_polygons.append(p);
+    m_shapeOrder.append({ShapeType::Polygon, p});
     connect(p, &Polygon::changed, this, &Document::changed);
     emit changed();
     return p;
@@ -75,6 +92,12 @@ void Document::removePolygon(Polygon *polygon) {
     int idx = m_polygons.indexOf(polygon);
     if (idx >= 0) {
         m_polygons.remove(idx);
+        for (int i = 0; i < m_shapeOrder.size(); ++i) {
+            if (m_shapeOrder[i].ptr == polygon) {
+                m_shapeOrder.remove(i);
+                break;
+            }
+        }
         polygon->deleteLater();
         emit changed();
     }
@@ -83,6 +106,7 @@ void Document::removePolygon(Polygon *polygon) {
 Curve *Document::addCurve() {
     Curve *c = new Curve(this);
     m_curves.append(c);
+    m_shapeOrder.append({ShapeType::Curve, c});
     connect(c, &Curve::changed, this, &Document::changed);
     emit changed();
     return c;
@@ -92,6 +116,12 @@ void Document::removeCurve(Curve *curve) {
     int idx = m_curves.indexOf(curve);
     if (idx >= 0) {
         m_curves.remove(idx);
+        for (int i = 0; i < m_shapeOrder.size(); ++i) {
+            if (m_shapeOrder[i].ptr == curve) {
+                m_shapeOrder.remove(i);
+                break;
+            }
+        }
         curve->deleteLater();
         emit changed();
     }
@@ -100,6 +130,7 @@ void Document::removeCurve(Curve *curve) {
 Ellipse *Document::addEllipse() {
     Ellipse *e = new Ellipse(this);
     m_ellipses.append(e);
+    m_shapeOrder.append({ShapeType::Ellipse, e});
     connect(e, &Ellipse::changed, this, &Document::changed);
     emit changed();
     return e;
@@ -124,6 +155,12 @@ void Document::removeEllipse(Ellipse *ellipse) {
     int idx = m_ellipses.indexOf(ellipse);
     if (idx >= 0) {
         m_ellipses.remove(idx);
+        for (int i = 0; i < m_shapeOrder.size(); ++i) {
+            if (m_shapeOrder[i].ptr == ellipse) {
+                m_shapeOrder.remove(i);
+                break;
+            }
+        }
         ellipse->deleteLater();
         emit changed();
     }
@@ -141,6 +178,7 @@ void Document::clear() {
     m_polygons.clear();
     m_curves.clear();
     m_ellipses.clear();
+    m_shapeOrder.clear();
     m_pointCounter = 0;
     m_backgroundImage.clear();
 
@@ -196,62 +234,28 @@ QString Document::tikz() const {
             << "{\\includegraphics{" << m_backgroundImage << "}};\n\n";
     }
 
-    // Ellipses (draw first so they're behind)
-    if (!m_ellipses.isEmpty()) {
-        out << "  % Ellipses and Circles\n";
-        for (const Ellipse *e : m_ellipses) {
-            QString tikzStr = e->tikz();
-            if (!tikzStr.isEmpty()) {
-                out << "  " << tikzStr << "\n";
-            }
+    // Output shapes in drawing order
+    for (const ShapeRef &ref : m_shapeOrder) {
+        QString tikzStr;
+        switch (ref.type) {
+            case ShapeType::Point:
+                tikzStr = static_cast<Point*>(ref.ptr)->tikz();
+                break;
+            case ShapeType::Line:
+                tikzStr = static_cast<Line*>(ref.ptr)->tikz();
+                break;
+            case ShapeType::Polygon:
+                tikzStr = static_cast<Polygon*>(ref.ptr)->tikz();
+                break;
+            case ShapeType::Curve:
+                tikzStr = static_cast<Curve*>(ref.ptr)->tikz();
+                break;
+            case ShapeType::Ellipse:
+                tikzStr = static_cast<Ellipse*>(ref.ptr)->tikz();
+                break;
         }
-        out << "\n";
-    }
-
-    // Polygons
-    if (!m_polygons.isEmpty()) {
-        out << "  % Polygons\n";
-        for (const Polygon *p : m_polygons) {
-            QString tikzStr = p->tikz();
-            if (!tikzStr.isEmpty()) {
-                out << "  " << tikzStr << "\n";
-            }
-        }
-        out << "\n";
-    }
-
-    // Lines
-    if (!m_lines.isEmpty()) {
-        out << "  % Lines\n";
-        for (const Line *l : m_lines) {
-            QString tikzStr = l->tikz();
-            if (!tikzStr.isEmpty()) {
-                out << "  " << tikzStr << "\n";
-            }
-        }
-        out << "\n";
-    }
-
-    // Curves
-    if (!m_curves.isEmpty()) {
-        out << "  % Curves\n";
-        for (const Curve *c : m_curves) {
-            QString tikzStr = c->tikz();
-            if (!tikzStr.isEmpty()) {
-                out << "  " << tikzStr << "\n";
-            }
-        }
-        out << "\n";
-    }
-
-    // Points (draw last so they're on top)
-    if (!m_points.isEmpty()) {
-        out << "  % Points\n";
-        for (const Point *p : m_points) {
-            QString tikzStr = p->tikz();
-            if (!tikzStr.isEmpty()) {
-                out << "  " << tikzStr << "\n";
-            }
+        if (!tikzStr.isEmpty()) {
+            out << "  " << tikzStr << "\n";
         }
     }
 
@@ -291,8 +295,12 @@ bool Document::save(const QString &path) {
         obj["endY"] = l->endPos().y();
         obj["color"] = l->color().name();
         obj["lineWidth"] = l->lineWidth();
-        obj["dashed"] = l->isDashed();
+        obj["lineStyle"] = static_cast<int>(l->lineStyle());
+        obj["lineCap"] = static_cast<int>(l->lineCap());
+        obj["lineJoin"] = static_cast<int>(l->lineJoin());
         obj["cornerRadius"] = l->cornerRadius();
+        obj["rotation"] = l->rotation();
+        obj["scale"] = l->scale();
         linesArr.append(obj);
     }
     root["lines"] = linesArr;
@@ -313,7 +321,13 @@ bool Document::save(const QString &path) {
         obj["fillColor"] = p->fillColor().name();
         obj["strokeColor"] = p->strokeColor().name();
         obj["lineWidth"] = p->lineWidth();
+        obj["lineStyle"] = static_cast<int>(p->lineStyle());
+        obj["lineCap"] = static_cast<int>(p->lineCap());
+        obj["lineJoin"] = static_cast<int>(p->lineJoin());
+        obj["fillPattern"] = static_cast<int>(p->fillPattern());
         obj["opacity"] = p->opacity();
+        obj["rotation"] = p->rotation();
+        obj["scale"] = p->scale();
         obj["defaultCornerRadius"] = p->defaultCornerRadius();
         polysArr.append(obj);
     }
@@ -335,8 +349,12 @@ bool Document::save(const QString &path) {
         obj["tension"] = c->tension();
         obj["color"] = c->color().name();
         obj["lineWidth"] = c->lineWidth();
-        obj["dashed"] = c->isDashed();
+        obj["lineStyle"] = static_cast<int>(c->lineStyle());
+        obj["lineCap"] = static_cast<int>(c->lineCap());
+        obj["lineJoin"] = static_cast<int>(c->lineJoin());
         obj["closed"] = c->isClosed();
+        obj["rotation"] = c->rotation();
+        obj["scale"] = c->scale();
         curvesArr.append(obj);
     }
     root["curves"] = curvesArr;
@@ -350,9 +368,14 @@ bool Document::save(const QString &path) {
         obj["radiusX"] = e->radiusX();
         obj["radiusY"] = e->radiusY();
         obj["rotation"] = e->rotation();
+        obj["scale"] = e->scale();
         obj["fillColor"] = e->fillColor().name();
         obj["strokeColor"] = e->strokeColor().name();
         obj["lineWidth"] = e->lineWidth();
+        obj["lineStyle"] = static_cast<int>(e->lineStyle());
+        obj["lineCap"] = static_cast<int>(e->lineCap());
+        obj["lineJoin"] = static_cast<int>(e->lineJoin());
+        obj["fillPattern"] = static_cast<int>(e->fillPattern());
         obj["opacity"] = e->opacity();
         ellipsesArr.append(obj);
     }
@@ -360,6 +383,35 @@ bool Document::save(const QString &path) {
 
     root["backgroundImage"] = m_backgroundImage;
     root["backgroundOpacity"] = m_backgroundOpacity;
+
+    // Save drawing order
+    QJsonArray orderArr;
+    for (const ShapeRef &ref : m_shapeOrder) {
+        QJsonObject orderObj;
+        orderObj["type"] = static_cast<int>(ref.type);
+        // Find index within the shape's type-specific vector
+        int idx = -1;
+        switch (ref.type) {
+            case ShapeType::Point:
+                idx = m_points.indexOf(static_cast<Point*>(ref.ptr));
+                break;
+            case ShapeType::Line:
+                idx = m_lines.indexOf(static_cast<Line*>(ref.ptr));
+                break;
+            case ShapeType::Polygon:
+                idx = m_polygons.indexOf(static_cast<Polygon*>(ref.ptr));
+                break;
+            case ShapeType::Curve:
+                idx = m_curves.indexOf(static_cast<Curve*>(ref.ptr));
+                break;
+            case ShapeType::Ellipse:
+                idx = m_ellipses.indexOf(static_cast<Ellipse*>(ref.ptr));
+                break;
+        }
+        orderObj["index"] = idx;
+        orderArr.append(orderObj);
+    }
+    root["shapeOrder"] = orderArr;
 
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly)) return false;
@@ -399,8 +451,12 @@ bool Document::load(const QString &path) {
         );
         l->setColor(QColor(obj["color"].toString()));
         l->setLineWidth(obj["lineWidth"].toDouble(0.8));
-        l->setDashed(obj["dashed"].toBool());
+        l->setLineStyle(static_cast<LineStyle>(obj["lineStyle"].toInt(0)));
+        l->setLineCap(static_cast<LineCap>(obj["lineCap"].toInt(0)));
+        l->setLineJoin(static_cast<LineJoin>(obj["lineJoin"].toInt(0)));
         l->setCornerRadius(obj["cornerRadius"].toDouble());
+        l->setRotation(obj["rotation"].toDouble(0.0));
+        l->setScale(obj["scale"].toDouble(1.0));
     }
 
     // Polygons
@@ -415,7 +471,13 @@ bool Document::load(const QString &path) {
         p->setFillColor(QColor(obj["fillColor"].toString()));
         p->setStrokeColor(QColor(obj["strokeColor"].toString()));
         p->setLineWidth(obj["lineWidth"].toDouble(0.8));
+        p->setLineStyle(static_cast<LineStyle>(obj["lineStyle"].toInt(0)));
+        p->setLineCap(static_cast<LineCap>(obj["lineCap"].toInt(0)));
+        p->setLineJoin(static_cast<LineJoin>(obj["lineJoin"].toInt(0)));
+        p->setFillPattern(static_cast<FillPattern>(obj["fillPattern"].toInt(1)));  // Default Solid
         p->setOpacity(obj["opacity"].toDouble(1.0));
+        p->setRotation(obj["rotation"].toDouble(0.0));
+        p->setScale(obj["scale"].toDouble(1.0));
         p->setDefaultCornerRadius(obj["defaultCornerRadius"].toDouble(0.0));
     }
 
@@ -431,8 +493,12 @@ bool Document::load(const QString &path) {
         c->setTension(obj["tension"].toDouble(0.5));
         c->setColor(QColor(obj["color"].toString()));
         c->setLineWidth(obj["lineWidth"].toDouble(0.8));
-        c->setDashed(obj["dashed"].toBool());
+        c->setLineStyle(static_cast<LineStyle>(obj["lineStyle"].toInt(0)));
+        c->setLineCap(static_cast<LineCap>(obj["lineCap"].toInt(0)));
+        c->setLineJoin(static_cast<LineJoin>(obj["lineJoin"].toInt(0)));
         c->setClosed(obj["closed"].toBool());
+        c->setRotation(obj["rotation"].toDouble(0.0));
+        c->setScale(obj["scale"].toDouble(1.0));
     }
 
     // Ellipses
@@ -443,9 +509,14 @@ bool Document::load(const QString &path) {
         e->setRadiusX(obj["radiusX"].toDouble(1.0));
         e->setRadiusY(obj["radiusY"].toDouble(1.0));
         e->setRotation(obj["rotation"].toDouble(0.0));
+        e->setScale(obj["scale"].toDouble(1.0));
         e->setFillColor(QColor(obj["fillColor"].toString()));
         e->setStrokeColor(QColor(obj["strokeColor"].toString()));
         e->setLineWidth(obj["lineWidth"].toDouble(0.8));
+        e->setLineStyle(static_cast<LineStyle>(obj["lineStyle"].toInt(0)));
+        e->setLineCap(static_cast<LineCap>(obj["lineCap"].toInt(0)));
+        e->setLineJoin(static_cast<LineJoin>(obj["lineJoin"].toInt(0)));
+        e->setFillPattern(static_cast<FillPattern>(obj["fillPattern"].toInt(1)));  // Default Solid
         e->setOpacity(obj["opacity"].toDouble(1.0));
     }
 
@@ -453,6 +524,45 @@ bool Document::load(const QString &path) {
     m_backgroundOpacity = root["backgroundOpacity"].toDouble(0.5);
     if (!m_backgroundImage.isEmpty()) {
         emit backgroundImageChanged();
+    }
+
+    // Restore drawing order
+    QJsonArray orderArr = root["shapeOrder"].toArray();
+    if (!orderArr.isEmpty()) {
+        // Clear the order that was auto-populated during adds
+        m_shapeOrder.clear();
+        // Reconstruct order from saved data
+        for (const QJsonValue &v : orderArr) {
+            QJsonObject orderObj = v.toObject();
+            ShapeType type = static_cast<ShapeType>(orderObj["type"].toInt());
+            int idx = orderObj["index"].toInt();
+            void *ptr = nullptr;
+            switch (type) {
+                case ShapeType::Point:
+                    if (idx >= 0 && idx < m_points.size())
+                        ptr = m_points[idx];
+                    break;
+                case ShapeType::Line:
+                    if (idx >= 0 && idx < m_lines.size())
+                        ptr = m_lines[idx];
+                    break;
+                case ShapeType::Polygon:
+                    if (idx >= 0 && idx < m_polygons.size())
+                        ptr = m_polygons[idx];
+                    break;
+                case ShapeType::Curve:
+                    if (idx >= 0 && idx < m_curves.size())
+                        ptr = m_curves[idx];
+                    break;
+                case ShapeType::Ellipse:
+                    if (idx >= 0 && idx < m_ellipses.size())
+                        ptr = m_ellipses[idx];
+                    break;
+            }
+            if (ptr) {
+                m_shapeOrder.append({type, ptr});
+            }
+        }
     }
 
     return true;

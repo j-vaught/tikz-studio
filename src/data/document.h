@@ -5,12 +5,20 @@
 #include <QVector>
 #include <QString>
 #include <QUndoStack>
+#include <variant>
 
 class Point;
 class Line;
 class Polygon;
 class Curve;
 class Ellipse;
+
+// Shape order tracking
+enum class ShapeType { Point, Line, Polygon, Curve, Ellipse };
+struct ShapeRef {
+    ShapeType type;
+    void *ptr;
+};
 
 class Document : public QObject {
     Q_OBJECT
@@ -71,6 +79,9 @@ public:
     // Generate unique point name
     QString freshPointName();
 
+    // Get shapes in drawing order
+    const QVector<ShapeRef> &shapeOrder() const { return m_shapeOrder; }
+
 signals:
     void changed();
     void backgroundImageChanged();
@@ -81,6 +92,7 @@ private:
     QVector<Polygon*> m_polygons;
     QVector<Curve*> m_curves;
     QVector<Ellipse*> m_ellipses;
+    QVector<ShapeRef> m_shapeOrder;  // Tracks drawing order
 
     QUndoStack m_undoStack;
     QString m_backgroundImage;
