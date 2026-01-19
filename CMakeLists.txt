@@ -38,6 +38,7 @@ set(SOURCES
     src/gui/ellipseitem.cpp
     src/gui/propertiespanel.cpp
     src/gui/contexttoolbar.cpp
+    src/gui/layerspanel.cpp
 )
 
 set(HEADERS
@@ -60,6 +61,7 @@ set(HEADERS
     src/gui/ellipseitem.h
     src/gui/propertiespanel.h
     src/gui/contexttoolbar.h
+    src/gui/layerspanel.h
     src/common.h
 )
 

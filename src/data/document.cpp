@@ -14,6 +14,8 @@
 Document::Document(QObject *parent)
     : QObject(parent)
 {
+    // Create default layer
+    addLayer("Layer 1");
 }
 
 Document::~Document() {
@@ -566,4 +568,127 @@ bool Document::load(const QString &path) {
     }
 
     return true;
+}
+
+// ============================================================================
+// Z-Ordering
+// ============================================================================
+
+void Document::bringToFront(void *shape, ShapeType type) {
+    for (int i = 0; i < m_shapeOrder.size(); ++i) {
+        if (m_shapeOrder[i].ptr == shape && m_shapeOrder[i].type == type) {
+            ShapeRef ref = m_shapeOrder.takeAt(i);
+            m_shapeOrder.append(ref);
+            emit changed();
+            return;
+        }
+    }
+}
+
+void Document::sendToBack(void *shape, ShapeType type) {
+    for (int i = 0; i < m_shapeOrder.size(); ++i) {
+        if (m_shapeOrder[i].ptr == shape && m_shapeOrder[i].type == type) {
+            ShapeRef ref = m_shapeOrder.takeAt(i);
+            m_shapeOrder.prepend(ref);
+            emit changed();
+            return;
+        }
+    }
+}
+
+void Document::bringForward(void *shape, ShapeType type) {
+    for (int i = 0; i < m_shapeOrder.size() - 1; ++i) {
+        if (m_shapeOrder[i].ptr == shape && m_shapeOrder[i].type == type) {
+            m_shapeOrder.swapItemsAt(i, i + 1);
+            emit changed();
+            return;
+        }
+    }
+}
+
+void Document::sendBackward(void *shape, ShapeType type) {
+    for (int i = 1; i < m_shapeOrder.size(); ++i) {
+        if (m_shapeOrder[i].ptr == shape && m_shapeOrder[i].type == type) {
+            m_shapeOrder.swapItemsAt(i, i - 1);
+            emit changed();
+            return;
+        }
+    }
+}
+
+// ============================================================================
+// Layer Management
+// ============================================================================
+
+int Document::addLayer(const QString &name) {
+    Layer layer;
+    layer.name = name.isEmpty() ? QString("Layer %1").arg(++m_layerCounter) : name;
+    layer.visible = true;
+    layer.locked = false;
+    m_layers.append(layer);
+    emit layersChanged();
+    return m_layers.size() - 1;
+}
+
+void Document::removeLayer(int index) {
+    if (index < 0 || index >= m_layers.size()) return;
+    if (m_layers.size() <= 1) return;  // Keep at least one layer
+
+    // Move shapes from deleted layer to layer 0
+    for (const ShapeRef &ref : m_layers[index].shapes) {
+        m_layers[0].shapes.append(ref);
+    }
+
+    m_layers.remove(index);
+
+    if (m_currentLayer >= m_layers.size()) {
+        m_currentLayer = m_layers.size() - 1;
+    }
+
+    emit layersChanged();
+    emit changed();
+}
+
+void Document::setLayerVisible(int index, bool visible) {
+    if (index < 0 || index >= m_layers.size()) return;
+    m_layers[index].visible = visible;
+    emit layersChanged();
+    emit changed();
+}
+
+void Document::setLayerLocked(int index, bool locked) {
+    if (index < 0 || index >= m_layers.size()) return;
+    m_layers[index].locked = locked;
+    emit layersChanged();
+}
+
+void Document::setLayerName(int index, const QString &name) {
+    if (index < 0 || index >= m_layers.size()) return;
+    m_layers[index].name = name;
+    emit layersChanged();
+}
+
+void Document::moveShapeToLayer(void *shape, ShapeType type, int layerIndex) {
+    if (layerIndex < 0 || layerIndex >= m_layers.size()) return;
+
+    // Remove from current layer
+    for (int i = 0; i < m_layers.size(); ++i) {
+        for (int j = 0; j < m_layers[i].shapes.size(); ++j) {
+            if (m_layers[i].shapes[j].ptr == shape && m_layers[i].shapes[j].type == type) {
+                m_layers[i].shapes.remove(j);
+                break;
+            }
+        }
+    }
+
+    // Add to new layer
+    m_layers[layerIndex].shapes.append({type, shape});
+    emit layersChanged();
+    emit changed();
+}
+
+void Document::setCurrentLayer(int index) {
+    if (index < 0 || index >= m_layers.size()) return;
+    m_currentLayer = index;
+    emit layersChanged();
 }

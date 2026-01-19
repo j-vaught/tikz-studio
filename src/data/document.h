@@ -82,7 +82,31 @@ public:
     // Get shapes in drawing order
     const QVector<ShapeRef> &shapeOrder() const { return m_shapeOrder; }
 
+    // Z-ordering operations
+    void bringToFront(void *shape, ShapeType type);
+    void sendToBack(void *shape, ShapeType type);
+    void bringForward(void *shape, ShapeType type);
+    void sendBackward(void *shape, ShapeType type);
+
+    // Layer management
+    struct Layer {
+        QString name;
+        bool visible = true;
+        bool locked = false;
+        QVector<ShapeRef> shapes;
+    };
+    const QVector<Layer> &layers() const { return m_layers; }
+    int addLayer(const QString &name = QString());
+    void removeLayer(int index);
+    void setLayerVisible(int index, bool visible);
+    void setLayerLocked(int index, bool locked);
+    void setLayerName(int index, const QString &name);
+    void moveShapeToLayer(void *shape, ShapeType type, int layerIndex);
+    int currentLayer() const { return m_currentLayer; }
+    void setCurrentLayer(int index);
+
 signals:
+    void layersChanged();
     void changed();
     void backgroundImageChanged();
 
@@ -99,6 +123,11 @@ private:
     float m_backgroundOpacity = 0.5f;
 
     int m_pointCounter = 0;
+
+    // Layers
+    QVector<Layer> m_layers;
+    int m_currentLayer = 0;
+    int m_layerCounter = 0;
 };
 
 #endif // DOCUMENT_H

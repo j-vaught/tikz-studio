@@ -6,6 +6,7 @@
 #include "colorpalette.h"
 #include "propertiespanel.h"
 #include "contexttoolbar.h"
+#include "layerspanel.h"
 #include "common.h"
 #include "line.h"
 #include "polygon.h"
@@ -317,6 +318,46 @@ void MainWindow::setupMenus() {
     deleteAction->setShortcut(QKeySequence::Delete);
     connect(deleteAction, &QAction::triggered, m_canvas, &Canvas::deleteSelected);
 
+    // Arrange menu
+    QMenu *arrangeMenu = menuBar()->addMenu("&Arrange");
+
+    // Z-ordering
+    QAction *bringToFrontAction = arrangeMenu->addAction("Bring to &Front");
+    bringToFrontAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketRight));
+    connect(bringToFrontAction, &QAction::triggered, m_canvas, &Canvas::bringToFront);
+
+    QAction *bringForwardAction = arrangeMenu->addAction("Bring For&ward");
+    bringForwardAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_BracketRight));
+    connect(bringForwardAction, &QAction::triggered, m_canvas, &Canvas::bringForward);
+
+    QAction *sendBackwardAction = arrangeMenu->addAction("Send &Backward");
+    sendBackwardAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_BracketLeft));
+    connect(sendBackwardAction, &QAction::triggered, m_canvas, &Canvas::sendBackward);
+
+    QAction *sendToBackAction = arrangeMenu->addAction("Send to Bac&k");
+    sendToBackAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_BracketLeft));
+    connect(sendToBackAction, &QAction::triggered, m_canvas, &Canvas::sendToBack);
+
+    arrangeMenu->addSeparator();
+
+    // Flip/Mirror
+    QAction *flipHAction = arrangeMenu->addAction("Flip &Horizontal");
+    flipHAction->setShortcut(QKeySequence(Qt::Key_H));
+    connect(flipHAction, &QAction::triggered, m_canvas, &Canvas::flipHorizontal);
+
+    QAction *flipVAction = arrangeMenu->addAction("Flip &Vertical");
+    flipVAction->setShortcut(QKeySequence(Qt::Key_V));
+    connect(flipVAction, &QAction::triggered, m_canvas, &Canvas::flipVertical);
+
+    arrangeMenu->addSeparator();
+
+    // Distribute
+    QAction *distHAction = arrangeMenu->addAction("Distribute Hori&zontally");
+    connect(distHAction, &QAction::triggered, m_canvas, &Canvas::distributeHorizontally);
+
+    QAction *distVAction = arrangeMenu->addAction("Distribute Verticall&y");
+    connect(distVAction, &QAction::triggered, m_canvas, &Canvas::distributeVertically);
+
     // View menu
     QMenu *viewMenu = menuBar()->addMenu("&View");
 
@@ -508,9 +549,17 @@ void MainWindow::setupDocks() {
     m_codeDock->setFeatures(QDockWidget::DockWidgetMovable);
     addDockWidget(Qt::RightDockWidgetArea, m_codeDock);
 
+    // Layers panel dock
+    m_layersDock = new QDockWidget("Layers", this);
+    m_layersPanel = new LayersPanel(m_document);
+    m_layersDock->setWidget(m_layersPanel);
+    m_layersDock->setFeatures(QDockWidget::DockWidgetMovable);
+    addDockWidget(Qt::RightDockWidgetArea, m_layersDock);
+
     // Stack the right docks
     tabifyDockWidget(colorDock, m_propertiesDock);
     tabifyDockWidget(m_propertiesDock, displayDock);
+    tabifyDockWidget(displayDock, m_layersDock);
     colorDock->raise();
 }
 

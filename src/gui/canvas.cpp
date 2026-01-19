@@ -518,6 +518,484 @@ void Canvas::duplicate() {
     paste();
 }
 
+// ============================================================================
+// Z-Ordering
+// ============================================================================
+
+void Canvas::bringToFront() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    for (QGraphicsItem *item : selected) {
+        if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            m_document->bringToFront(pi->point(), ShapeType::Point);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            m_document->bringToFront(li->line(), ShapeType::Line);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            m_document->bringToFront(pi->polygon(), ShapeType::Polygon);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            m_document->bringToFront(ci->curve(), ShapeType::Curve);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            m_document->bringToFront(ei->ellipse(), ShapeType::Ellipse);
+        }
+    }
+}
+
+void Canvas::sendToBack() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    for (QGraphicsItem *item : selected) {
+        if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            m_document->sendToBack(pi->point(), ShapeType::Point);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            m_document->sendToBack(li->line(), ShapeType::Line);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            m_document->sendToBack(pi->polygon(), ShapeType::Polygon);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            m_document->sendToBack(ci->curve(), ShapeType::Curve);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            m_document->sendToBack(ei->ellipse(), ShapeType::Ellipse);
+        }
+    }
+}
+
+void Canvas::bringForward() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    for (QGraphicsItem *item : selected) {
+        if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            m_document->bringForward(pi->point(), ShapeType::Point);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            m_document->bringForward(li->line(), ShapeType::Line);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            m_document->bringForward(pi->polygon(), ShapeType::Polygon);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            m_document->bringForward(ci->curve(), ShapeType::Curve);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            m_document->bringForward(ei->ellipse(), ShapeType::Ellipse);
+        }
+    }
+}
+
+void Canvas::sendBackward() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    for (QGraphicsItem *item : selected) {
+        if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            m_document->sendBackward(pi->point(), ShapeType::Point);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            m_document->sendBackward(li->line(), ShapeType::Line);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            m_document->sendBackward(pi->polygon(), ShapeType::Polygon);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            m_document->sendBackward(ci->curve(), ShapeType::Curve);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            m_document->sendBackward(ei->ellipse(), ShapeType::Ellipse);
+        }
+    }
+}
+
+// ============================================================================
+// Flip/Mirror Operations
+// ============================================================================
+
+void Canvas::flipHorizontal() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    if (selected.isEmpty()) return;
+
+    // Calculate bounding box center
+    QRectF bounds;
+    bool first = true;
+    for (QGraphicsItem *item : selected) {
+        QRectF itemBounds = item->sceneBoundingRect();
+        if (first) {
+            bounds = itemBounds;
+            first = false;
+        } else {
+            bounds = bounds.united(itemBounds);
+        }
+    }
+    float centerX = bounds.center().x();
+
+    // Flip each shape around the center
+    for (QGraphicsItem *item : selected) {
+        if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            Point *p = pi->point();
+            QPointF pos = p->pos();
+            pos.setX(2 * centerX - pos.x());
+            p->setPos(pos);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            Line *l = li->line();
+            QPointF start = l->startPos();
+            QPointF end = l->endPos();
+            start.setX(2 * centerX - start.x());
+            end.setX(2 * centerX - end.x());
+            l->setStartPos(start);
+            l->setEndPos(end);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            Polygon *p = pi->polygon();
+            for (int i = 0; i < p->vertexCount(); ++i) {
+                QPointF pos = p->vertices()[i].pos;
+                pos.setX(2 * centerX - pos.x());
+                p->setVertexPosition(i, pos);
+            }
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            Curve *c = ci->curve();
+            for (int i = 0; i < c->controlPointCount(); ++i) {
+                QPointF pos = c->controlPoints()[i];
+                pos.setX(2 * centerX - pos.x());
+                c->setControlPoint(i, pos);
+            }
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            Ellipse *e = ei->ellipse();
+            QPointF center = e->center();
+            center.setX(2 * centerX - center.x());
+            e->setCenter(center);
+        }
+    }
+
+    emit statusMessage("Flipped horizontally");
+}
+
+void Canvas::flipVertical() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    if (selected.isEmpty()) return;
+
+    // Calculate bounding box center
+    QRectF bounds;
+    bool first = true;
+    for (QGraphicsItem *item : selected) {
+        QRectF itemBounds = item->sceneBoundingRect();
+        if (first) {
+            bounds = itemBounds;
+            first = false;
+        } else {
+            bounds = bounds.united(itemBounds);
+        }
+    }
+    float centerY = bounds.center().y();
+
+    // Flip each shape around the center
+    for (QGraphicsItem *item : selected) {
+        if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            Point *p = pi->point();
+            QPointF pos = p->pos();
+            pos.setY(2 * centerY - pos.y());
+            p->setPos(pos);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            Line *l = li->line();
+            QPointF start = l->startPos();
+            QPointF end = l->endPos();
+            start.setY(2 * centerY - start.y());
+            end.setY(2 * centerY - end.y());
+            l->setStartPos(start);
+            l->setEndPos(end);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            Polygon *p = pi->polygon();
+            for (int i = 0; i < p->vertexCount(); ++i) {
+                QPointF pos = p->vertices()[i].pos;
+                pos.setY(2 * centerY - pos.y());
+                p->setVertexPosition(i, pos);
+            }
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            Curve *c = ci->curve();
+            for (int i = 0; i < c->controlPointCount(); ++i) {
+                QPointF pos = c->controlPoints()[i];
+                pos.setY(2 * centerY - pos.y());
+                c->setControlPoint(i, pos);
+            }
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            Ellipse *e = ei->ellipse();
+            QPointF center = e->center();
+            center.setY(2 * centerY - center.y());
+            e->setCenter(center);
+        }
+    }
+
+    emit statusMessage("Flipped vertically");
+}
+
+// ============================================================================
+// Distribute Operations (for 3+ identical shapes)
+// ============================================================================
+
+namespace {
+
+// Check if two polygons are "identical" (same vertex count, same relative positions, same scale)
+bool arePolygonsIdentical(Polygon *a, Polygon *b) {
+    if (a->vertexCount() != b->vertexCount()) return false;
+    if (a->vertexCount() < 2) return true;
+    if (!qFuzzyCompare(a->scale(), b->scale())) return false;
+    if (!qFuzzyCompare(a->rotation(), b->rotation())) return false;
+
+    // Compare relative vertex positions (shape should be the same)
+    QVector<Vertex> va = a->vertices();
+    QVector<Vertex> vb = b->vertices();
+
+    // Calculate bounding boxes
+    float minAx = va[0].pos.x(), maxAx = va[0].pos.x();
+    float minAy = va[0].pos.y(), maxAy = va[0].pos.y();
+    float minBx = vb[0].pos.x(), maxBx = vb[0].pos.x();
+    float minBy = vb[0].pos.y(), maxBy = vb[0].pos.y();
+
+    for (const Vertex &v : va) {
+        minAx = qMin(minAx, (float)v.pos.x());
+        maxAx = qMax(maxAx, (float)v.pos.x());
+        minAy = qMin(minAy, (float)v.pos.y());
+        maxAy = qMax(maxAy, (float)v.pos.y());
+    }
+    for (const Vertex &v : vb) {
+        minBx = qMin(minBx, (float)v.pos.x());
+        maxBx = qMax(maxBx, (float)v.pos.x());
+        minBy = qMin(minBy, (float)v.pos.y());
+        maxBy = qMax(maxBy, (float)v.pos.y());
+    }
+
+    float widthA = maxAx - minAx;
+    float heightA = maxAy - minAy;
+    float widthB = maxBx - minBx;
+    float heightB = maxBy - minBy;
+
+    // Check if dimensions match
+    if (!qFuzzyCompare(widthA + 1, widthB + 1) || !qFuzzyCompare(heightA + 1, heightB + 1))
+        return false;
+
+    return true;
+}
+
+bool areEllipsesIdentical(Ellipse *a, Ellipse *b) {
+    if (!qFuzzyCompare(a->radiusX(), b->radiusX())) return false;
+    if (!qFuzzyCompare(a->radiusY(), b->radiusY())) return false;
+    if (!qFuzzyCompare(a->rotation(), b->rotation())) return false;
+    if (!qFuzzyCompare(a->scale(), b->scale())) return false;
+    return true;
+}
+
+bool areLinesIdentical(Line *a, Line *b) {
+    // Lines are identical if they have the same length and rotation
+    QPointF da = a->endPos() - a->startPos();
+    QPointF db = b->endPos() - b->startPos();
+    float lenA = std::sqrt(da.x()*da.x() + da.y()*da.y());
+    float lenB = std::sqrt(db.x()*db.x() + db.y()*db.y());
+    if (!qFuzzyCompare(lenA + 1, lenB + 1)) return false;
+
+    // Check angle
+    float angleA = std::atan2(da.y(), da.x());
+    float angleB = std::atan2(db.y(), db.x());
+    if (!qFuzzyCompare(angleA + 10, angleB + 10)) return false;
+
+    return true;
+}
+
+} // anonymous namespace
+
+void Canvas::distributeHorizontally() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    if (selected.size() < 3) {
+        emit statusMessage("Select 3 or more identical shapes to distribute");
+        return;
+    }
+
+    // Check if all shapes are the same type and identical
+    bool allPolygons = true, allEllipses = true, allLines = true, allPoints = true;
+
+    for (QGraphicsItem *item : selected) {
+        if (!qgraphicsitem_cast<PolygonItem*>(item)) allPolygons = false;
+        if (!qgraphicsitem_cast<EllipseItem*>(item)) allEllipses = false;
+        if (!qgraphicsitem_cast<LineItem*>(item)) allLines = false;
+        if (!qgraphicsitem_cast<PointItem*>(item)) allPoints = false;
+    }
+
+    if (!allPolygons && !allEllipses && !allLines && !allPoints) {
+        emit statusMessage("All shapes must be the same type to distribute");
+        return;
+    }
+
+    // Collect centers and check identity
+    QVector<QPair<QGraphicsItem*, QPointF>> itemCenters;
+
+    if (allPolygons) {
+        Polygon *first = qgraphicsitem_cast<PolygonItem*>(selected[0])->polygon();
+        for (QGraphicsItem *item : selected) {
+            Polygon *p = qgraphicsitem_cast<PolygonItem*>(item)->polygon();
+            if (!arePolygonsIdentical(first, p)) {
+                emit statusMessage("Shapes must be identical (same size/orientation) to distribute");
+                return;
+            }
+            itemCenters.append({item, item->sceneBoundingRect().center()});
+        }
+    } else if (allEllipses) {
+        Ellipse *first = qgraphicsitem_cast<EllipseItem*>(selected[0])->ellipse();
+        for (QGraphicsItem *item : selected) {
+            Ellipse *e = qgraphicsitem_cast<EllipseItem*>(item)->ellipse();
+            if (!areEllipsesIdentical(first, e)) {
+                emit statusMessage("Shapes must be identical (same size/orientation) to distribute");
+                return;
+            }
+            itemCenters.append({item, item->sceneBoundingRect().center()});
+        }
+    } else if (allLines) {
+        Line *first = qgraphicsitem_cast<LineItem*>(selected[0])->line();
+        for (QGraphicsItem *item : selected) {
+            Line *l = qgraphicsitem_cast<LineItem*>(item)->line();
+            if (!areLinesIdentical(first, l)) {
+                emit statusMessage("Shapes must be identical (same length/orientation) to distribute");
+                return;
+            }
+            itemCenters.append({item, item->sceneBoundingRect().center()});
+        }
+    } else if (allPoints) {
+        for (QGraphicsItem *item : selected) {
+            itemCenters.append({item, item->sceneBoundingRect().center()});
+        }
+    }
+
+    // Sort by X position
+    std::sort(itemCenters.begin(), itemCenters.end(),
+              [](const QPair<QGraphicsItem*, QPointF> &a, const QPair<QGraphicsItem*, QPointF> &b) {
+                  return a.second.x() < b.second.x();
+              });
+
+    // Calculate even spacing
+    float minX = itemCenters.first().second.x();
+    float maxX = itemCenters.last().second.x();
+    float spacing = (maxX - minX) / (itemCenters.size() - 1);
+
+    // Apply new positions
+    for (int i = 1; i < itemCenters.size() - 1; ++i) {
+        QGraphicsItem *item = itemCenters[i].first;
+        QPointF oldCenter = itemCenters[i].second;
+        float newX = minX + i * spacing;
+        float dx = newX - oldCenter.x();
+
+        if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            Polygon *p = pi->polygon();
+            for (int j = 0; j < p->vertexCount(); ++j) {
+                QPointF pos = p->vertices()[j].pos;
+                pos.setX(pos.x() + dx);
+                p->setVertexPosition(j, pos);
+            }
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            Ellipse *e = ei->ellipse();
+            QPointF center = e->center();
+            center.setX(center.x() + dx);
+            e->setCenter(center);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            Line *l = li->line();
+            l->setStartPos(l->startPos() + QPointF(dx, 0));
+            l->setEndPos(l->endPos() + QPointF(dx, 0));
+        } else if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            Point *p = pi->point();
+            QPointF pos = p->pos();
+            pos.setX(pos.x() + dx);
+            p->setPos(pos);
+        }
+    }
+
+    emit statusMessage(QString("Distributed %1 shapes horizontally").arg(selected.size()));
+}
+
+void Canvas::distributeVertically() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    if (selected.size() < 3) {
+        emit statusMessage("Select 3 or more identical shapes to distribute");
+        return;
+    }
+
+    // Check if all shapes are the same type
+    bool allPolygons = true, allEllipses = true, allLines = true, allPoints = true;
+
+    for (QGraphicsItem *item : selected) {
+        if (!qgraphicsitem_cast<PolygonItem*>(item)) allPolygons = false;
+        if (!qgraphicsitem_cast<EllipseItem*>(item)) allEllipses = false;
+        if (!qgraphicsitem_cast<LineItem*>(item)) allLines = false;
+        if (!qgraphicsitem_cast<PointItem*>(item)) allPoints = false;
+    }
+
+    if (!allPolygons && !allEllipses && !allLines && !allPoints) {
+        emit statusMessage("All shapes must be the same type to distribute");
+        return;
+    }
+
+    // Collect centers and check identity
+    QVector<QPair<QGraphicsItem*, QPointF>> itemCenters;
+
+    if (allPolygons) {
+        Polygon *first = qgraphicsitem_cast<PolygonItem*>(selected[0])->polygon();
+        for (QGraphicsItem *item : selected) {
+            Polygon *p = qgraphicsitem_cast<PolygonItem*>(item)->polygon();
+            if (!arePolygonsIdentical(first, p)) {
+                emit statusMessage("Shapes must be identical (same size/orientation) to distribute");
+                return;
+            }
+            itemCenters.append({item, item->sceneBoundingRect().center()});
+        }
+    } else if (allEllipses) {
+        Ellipse *first = qgraphicsitem_cast<EllipseItem*>(selected[0])->ellipse();
+        for (QGraphicsItem *item : selected) {
+            Ellipse *e = qgraphicsitem_cast<EllipseItem*>(item)->ellipse();
+            if (!areEllipsesIdentical(first, e)) {
+                emit statusMessage("Shapes must be identical (same size/orientation) to distribute");
+                return;
+            }
+            itemCenters.append({item, item->sceneBoundingRect().center()});
+        }
+    } else if (allLines) {
+        Line *first = qgraphicsitem_cast<LineItem*>(selected[0])->line();
+        for (QGraphicsItem *item : selected) {
+            Line *l = qgraphicsitem_cast<LineItem*>(item)->line();
+            if (!areLinesIdentical(first, l)) {
+                emit statusMessage("Shapes must be identical (same length/orientation) to distribute");
+                return;
+            }
+            itemCenters.append({item, item->sceneBoundingRect().center()});
+        }
+    } else if (allPoints) {
+        for (QGraphicsItem *item : selected) {
+            itemCenters.append({item, item->sceneBoundingRect().center()});
+        }
+    }
+
+    // Sort by Y position
+    std::sort(itemCenters.begin(), itemCenters.end(),
+              [](const QPair<QGraphicsItem*, QPointF> &a, const QPair<QGraphicsItem*, QPointF> &b) {
+                  return a.second.y() < b.second.y();
+              });
+
+    // Calculate even spacing
+    float minY = itemCenters.first().second.y();
+    float maxY = itemCenters.last().second.y();
+    float spacing = (maxY - minY) / (itemCenters.size() - 1);
+
+    // Apply new positions
+    for (int i = 1; i < itemCenters.size() - 1; ++i) {
+        QGraphicsItem *item = itemCenters[i].first;
+        QPointF oldCenter = itemCenters[i].second;
+        float newY = minY + i * spacing;
+        float dy = newY - oldCenter.y();
+
+        if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            Polygon *p = pi->polygon();
+            for (int j = 0; j < p->vertexCount(); ++j) {
+                QPointF pos = p->vertices()[j].pos;
+                pos.setY(pos.y() + dy);
+                p->setVertexPosition(j, pos);
+            }
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            Ellipse *e = ei->ellipse();
+            QPointF center = e->center();
+            center.setY(center.y() + dy);
+            e->setCenter(center);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            Line *l = li->line();
+            l->setStartPos(l->startPos() + QPointF(0, dy));
+            l->setEndPos(l->endPos() + QPointF(0, dy));
+        } else if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            Point *p = pi->point();
+            QPointF pos = p->pos();
+            pos.setY(pos.y() + dy);
+            p->setPos(pos);
+        }
+    }
+
+    emit statusMessage(QString("Distributed %1 shapes vertically").arg(selected.size()));
+}
+
 void Canvas::setGridVisible(bool visible) {
     if (m_gridVisible != visible) {
         m_gridVisible = visible;

@@ -11,6 +11,7 @@ class ToolPalette;
 class ColorPalette;
 class PropertiesPanel;
 class ContextToolbar;
+class LayersPanel;
 class QTextEdit;
 class QDockWidget;
 class QLabel;
@@ -79,6 +80,8 @@ private:
     QTextEdit *m_tikzCodeView;
     QDockWidget *m_codeDock;
     QDockWidget *m_propertiesDock;
+    QDockWidget *m_layersDock;
+    LayersPanel *m_layersPanel;
 
     QLabel *m_statusLabel;
     QLabel *m_zoomLabel;

@@ -52,6 +52,20 @@ public:
     void paste();
     void duplicate();
 
+    // Z-ordering
+    void bringToFront();
+    void sendToBack();
+    void bringForward();
+    void sendBackward();
+
+    // Transform operations
+    void flipHorizontal();
+    void flipVertical();
+
+    // Distribute (for 3+ identical shapes)
+    void distributeHorizontally();
+    void distributeVertically();
+
     // Grid and axis visibility
     bool gridVisible() const { return m_gridVisible; }
     void setGridVisible(bool visible);
