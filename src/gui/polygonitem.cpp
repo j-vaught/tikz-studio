@@ -336,6 +336,7 @@ void PolygonItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             m_draggingRotation = true;
             m_dragStartPos = event->scenePos();
             m_dragStartRotation = m_polygon->rotation();
+            setFlag(ItemIsMovable, false);  // Disable moving while rotating
             event->accept();
             return;
         }
@@ -345,7 +346,8 @@ void PolygonItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             int handle = vertexHandleAtPos(pos);
             if (handle >= 0) {
                 m_dragVertexHandle = handle;
-                m_dragStartPos = event->scenePos();
+                m_dragStartPos = event->pos();  // Use local coords
+                setFlag(ItemIsMovable, false);  // Disable moving while dragging handle
                 event->accept();
                 return;
             }
@@ -355,6 +357,7 @@ void PolygonItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             if (corner != NoCorner) {
                 m_dragCornerHandle = corner;
                 m_dragStartPos = event->pos();  // In item local coordinates
+                setFlag(ItemIsMovable, false);  // Disable moving while rescaling
 
                 // Store original vertex positions (in TikZ coords)
                 m_dragStartVertices = m_polygon->vertexPositions();
@@ -406,8 +409,9 @@ void PolygonItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 
     if (m_dragVertexHandle >= 0 && m_polygon) {
         // Move the vertex (vertex editing mode)
-        QPointF scenePos = event->scenePos();
-        QPointF tikzPos = fromScreen(scenePos);
+        // Use local coordinates to account for item's position in scene
+        QPointF localPos = event->pos();
+        QPointF tikzPos = fromScreen(localPos);
 
         // Snap to grid
         tikzPos = snapToGrid(tikzPos, GRID_MINOR);
@@ -486,6 +490,7 @@ void PolygonItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     m_dragCornerHandle = NoCorner;
     m_draggingRotation = false;
     m_dragStartVertices.clear();
+    setFlag(ItemIsMovable, true);  // Re-enable moving
     QGraphicsPathItem::mouseReleaseEvent(event);
 }
 

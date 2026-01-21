@@ -281,6 +281,7 @@ void EllipseItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             m_dragStartRx = m_ellipse->radiusX();
             m_dragStartRy = m_ellipse->radiusY();
             m_dragStartRotation = m_ellipse->rotation();
+            setFlag(ItemIsMovable, false);  // Disable moving while dragging handle
             event->accept();
             return;
         }
@@ -335,6 +336,7 @@ void EllipseItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 
 void EllipseItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     m_dragHandle = None;
+    setFlag(ItemIsMovable, true);  // Re-enable moving
     QGraphicsEllipseItem::mouseReleaseEvent(event);
 }
 

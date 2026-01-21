@@ -1501,8 +1501,8 @@ void Canvas::handlePolygonTool(QGraphicsSceneMouseEvent *event) {
             m_currentPolygon->setLineJoin(defaults.lineJoin);
             m_currentPolygon->setFillPattern(defaults.fillPattern);
             m_currentPolygon->setOpacity(defaults.opacity);
-            m_currentPolygon->setRotation(defaults.rotation);
-            m_currentPolygon->setScale(defaults.scale);
+            m_currentPolygon->setRotation(0);  // New shapes start with no rotation
+            m_currentPolygon->setScale(1.0f);  // New shapes start at scale 1
             m_currentPolygon->setDefaultCornerRadius(defaults.cornerRadius);
 
             emit statusMessage("Polygon: adding vertices (right-click or Enter to finish)");
@@ -1798,8 +1798,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->setLineJoin(defaults.lineJoin);
         poly->setFillPattern(defaults.fillPattern);
         poly->setOpacity(defaults.opacity);
-        poly->setRotation(defaults.rotation);
-        poly->setScale(defaults.scale);
+        poly->setRotation(0);  // New shapes start with no rotation
+        poly->setScale(1.0f);  // New shapes start at scale 1
         poly->setDefaultCornerRadius(defaults.cornerRadius);
 
         float x1 = qMin(m_shapeStartPos.x(), endPos.x());
@@ -1829,8 +1829,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         ellipse->setLineJoin(defaults.lineJoin);
         ellipse->setFillPattern(defaults.fillPattern);
         ellipse->setOpacity(defaults.opacity);
-        ellipse->setRotation(defaults.rotation);
-        ellipse->setScale(defaults.scale);
+        ellipse->setRotation(0);  // New shapes start with no rotation
+        ellipse->setScale(1.0f);  // New shapes start at scale 1
 
         emit statusMessage("Circle created");
     }
@@ -1849,8 +1849,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         ellipse->setLineJoin(defaults.lineJoin);
         ellipse->setFillPattern(defaults.fillPattern);
         ellipse->setOpacity(defaults.opacity);
-        ellipse->setRotation(defaults.rotation);
-        ellipse->setScale(defaults.scale);
+        ellipse->setRotation(0);  // New shapes start with no rotation
+        ellipse->setScale(1.0f);  // New shapes start at scale 1
 
         emit statusMessage("Ellipse created");
     }
@@ -1872,8 +1872,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->setLineJoin(defaults.lineJoin);
         poly->setFillPattern(defaults.fillPattern);
         poly->setOpacity(defaults.opacity);
-        poly->setRotation(defaults.rotation);
-        poly->setScale(defaults.scale);
+        poly->setRotation(0);  // New shapes start with no rotation
+        poly->setScale(1.0f);  // New shapes start at scale 1
         poly->setDefaultCornerRadius(defaults.cornerRadius);
 
         for (int i = 0; i < sides; i++) {
@@ -1902,8 +1902,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->setLineJoin(defaults.lineJoin);
         poly->setFillPattern(defaults.fillPattern);
         poly->setOpacity(defaults.opacity);
-        poly->setRotation(defaults.rotation);
-        poly->setScale(defaults.scale);
+        poly->setRotation(0);  // New shapes start with no rotation
+        poly->setScale(1.0f);  // New shapes start at scale 1
 
         for (int i = 0; i < points * 2; i++) {
             float angle = startAngle + M_PI * i / points;
@@ -1929,8 +1929,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->setLineJoin(defaults.lineJoin);
         poly->setFillPattern(defaults.fillPattern);
         poly->setOpacity(defaults.opacity);
-        poly->setRotation(defaults.rotation);
-        poly->setScale(defaults.scale);
+        poly->setRotation(0);  // New shapes start with no rotation
+        poly->setScale(1.0f);  // New shapes start at scale 1
         poly->setDefaultCornerRadius(defaults.cornerRadius);
 
         poly->addVertex(QPointF(m_shapeStartPos.x(), m_shapeStartPos.y() + dy));  // Top
@@ -1970,8 +1970,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->setLineJoin(defaults.lineJoin);
         poly->setFillPattern(defaults.fillPattern);
         poly->setOpacity(defaults.opacity);
-        poly->setRotation(defaults.rotation);
-        poly->setScale(defaults.scale);
+        poly->setRotation(0);  // New shapes start with no rotation
+        poly->setScale(1.0f);  // New shapes start at scale 1
 
         poly->addVertex(tip);
         poly->addVertex(headBase + QPointF(px * headWidth/2, py * headWidth/2));
@@ -2002,8 +2002,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->setLineJoin(defaults.lineJoin);
         poly->setFillPattern(defaults.fillPattern);
         poly->setOpacity(defaults.opacity);
-        poly->setRotation(defaults.rotation);
-        poly->setScale(defaults.scale);
+        poly->setRotation(0);  // New shapes start with no rotation
+        poly->setScale(1.0f);  // New shapes start at scale 1
         poly->setDefaultCornerRadius(defaults.cornerRadius);
 
         poly->addVertex(QPointF(x1 + inset, y2));
@@ -2033,8 +2033,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->setLineJoin(defaults.lineJoin);
         poly->setFillPattern(defaults.fillPattern);
         poly->setOpacity(defaults.opacity);
-        poly->setRotation(defaults.rotation);
-        poly->setScale(defaults.scale);
+        poly->setRotation(0);  // New shapes start with no rotation
+        poly->setScale(1.0f);  // New shapes start at scale 1
         poly->setDefaultCornerRadius(defaults.cornerRadius);
 
         poly->addVertex(QPointF(x1 + skew, y2));
@@ -2059,8 +2059,8 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         curve->setLineStyle(defaults.lineStyle);
         curve->setLineCap(defaults.lineCap);
         curve->setLineJoin(defaults.lineJoin);
-        curve->setRotation(defaults.rotation);
-        curve->setScale(defaults.scale);
+        curve->setRotation(0);  // New shapes start with no rotation
+        curve->setScale(1.0f);  // New shapes start at scale 1
         curve->setCurveType(Curve::Smooth);
 
         // Create arc from 0 to endAngle with multiple points
