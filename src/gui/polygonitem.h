@@ -58,6 +58,7 @@ private:
 
     // Common drag state
     bool m_draggingRotation = false;
+    bool m_handlingDrag = false;  // True when we're handling a drag (skip base class)
     QPointF m_dragStartPos;
     float m_dragStartRotation = 0;
 };

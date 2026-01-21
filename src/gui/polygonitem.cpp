@@ -334,9 +334,9 @@ void PolygonItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
         // Check rotation handle first
         if (rotationHandleAtPos(pos)) {
             m_draggingRotation = true;
+            m_handlingDrag = true;
             m_dragStartPos = event->scenePos();
             m_dragStartRotation = m_polygon->rotation();
-            setFlag(ItemIsMovable, false);  // Disable moving while rotating
             event->accept();
             return;
         }
@@ -346,8 +346,8 @@ void PolygonItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             int handle = vertexHandleAtPos(pos);
             if (handle >= 0) {
                 m_dragVertexHandle = handle;
+                m_handlingDrag = true;
                 m_dragStartPos = event->pos();  // Use local coords
-                setFlag(ItemIsMovable, false);  // Disable moving while dragging handle
                 event->accept();
                 return;
             }
@@ -356,8 +356,8 @@ void PolygonItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             CornerHandle corner = cornerHandleAtPos(pos);
             if (corner != NoCorner) {
                 m_dragCornerHandle = corner;
+                m_handlingDrag = true;
                 m_dragStartPos = event->pos();  // In item local coordinates
-                setFlag(ItemIsMovable, false);  // Disable moving while rescaling
 
                 // Store original vertex positions (in TikZ coords)
                 m_dragStartVertices = m_polygon->vertexPositions();
@@ -390,6 +390,12 @@ void PolygonItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
 }
 
 void PolygonItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
+    // If we're handling a drag, don't let the base class interfere
+    if (!m_handlingDrag) {
+        QGraphicsPathItem::mouseMoveEvent(event);
+        return;
+    }
+
     if (m_draggingRotation && m_polygon) {
         // Calculate rotation based on mouse position relative to center
         QRectF bounds = path().boundingRect();
@@ -479,19 +485,21 @@ void PolygonItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
         }
 
         event->accept();
-        return;
     }
-
-    QGraphicsPathItem::mouseMoveEvent(event);
 }
 
 void PolygonItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+    bool wasHandling = m_handlingDrag;
     m_dragVertexHandle = -1;
     m_dragCornerHandle = NoCorner;
     m_draggingRotation = false;
+    m_handlingDrag = false;
     m_dragStartVertices.clear();
-    setFlag(ItemIsMovable, true);  // Re-enable moving
-    QGraphicsPathItem::mouseReleaseEvent(event);
+
+    // Only call base class if we weren't handling the drag ourselves
+    if (!wasHandling) {
+        QGraphicsPathItem::mouseReleaseEvent(event);
+    }
 }
 
 void PolygonItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event) {
