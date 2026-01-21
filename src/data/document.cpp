@@ -4,6 +4,7 @@
 #include "polygon.h"
 #include "curve.h"
 #include "ellipse.h"
+#include "group.h"
 #include "common.h"
 
 #include <QFile>
@@ -168,18 +169,44 @@ void Document::removeEllipse(Ellipse *ellipse) {
     }
 }
 
+Group *Document::addGroup() {
+    Group *g = new Group(this);
+    m_groups.append(g);
+    m_shapeOrder.append({ShapeType::Group, g});
+    connect(g, &Group::changed, this, &Document::changed);
+    emit changed();
+    return g;
+}
+
+void Document::removeGroup(Group *group) {
+    int idx = m_groups.indexOf(group);
+    if (idx >= 0) {
+        m_groups.remove(idx);
+        for (int i = 0; i < m_shapeOrder.size(); ++i) {
+            if (m_shapeOrder[i].ptr == group) {
+                m_shapeOrder.remove(i);
+                break;
+            }
+        }
+        group->deleteLater();
+        emit changed();
+    }
+}
+
 void Document::clear() {
     for (Point *p : m_points) p->deleteLater();
     for (Line *l : m_lines) l->deleteLater();
     for (Polygon *p : m_polygons) p->deleteLater();
     for (Curve *c : m_curves) c->deleteLater();
     for (Ellipse *e : m_ellipses) e->deleteLater();
+    for (Group *g : m_groups) g->deleteLater();
 
     m_points.clear();
     m_lines.clear();
     m_polygons.clear();
     m_curves.clear();
     m_ellipses.clear();
+    m_groups.clear();
     m_shapeOrder.clear();
     m_pointCounter = 0;
     m_backgroundImage.clear();
@@ -254,6 +281,9 @@ QString Document::tikz() const {
                 break;
             case ShapeType::Ellipse:
                 tikzStr = static_cast<Ellipse*>(ref.ptr)->tikz();
+                break;
+            case ShapeType::Group:
+                tikzStr = static_cast<Group*>(ref.ptr)->tikz();
                 break;
         }
         if (!tikzStr.isEmpty()) {
@@ -409,6 +439,9 @@ bool Document::save(const QString &path) {
             case ShapeType::Ellipse:
                 idx = m_ellipses.indexOf(static_cast<Ellipse*>(ref.ptr));
                 break;
+            case ShapeType::Group:
+                idx = m_groups.indexOf(static_cast<Group*>(ref.ptr));
+                break;
         }
         orderObj["index"] = idx;
         orderArr.append(orderObj);
@@ -560,6 +593,10 @@ bool Document::load(const QString &path) {
                     if (idx >= 0 && idx < m_ellipses.size())
                         ptr = m_ellipses[idx];
                     break;
+                case ShapeType::Group:
+                    if (idx >= 0 && idx < m_groups.size())
+                        ptr = m_groups[idx];
+                    break;
             }
             if (ptr) {
                 m_shapeOrder.append({type, ptr});
@@ -689,6 +726,7 @@ void Document::moveShapeToLayer(void *shape, ShapeType type, int layerIndex) {
 
 void Document::setCurrentLayer(int index) {
     if (index < 0 || index >= m_layers.size()) return;
+    if (m_currentLayer == index) return;  // No change
     m_currentLayer = index;
     emit layersChanged();
 }

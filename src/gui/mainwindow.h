@@ -86,6 +86,7 @@ private:
     QLabel *m_statusLabel;
     QLabel *m_zoomLabel;
     QSpinBox *m_ngonSidesSpin;
+    QSpinBox *m_parallelogramSkewSpin;
     QSlider *m_bgOpacitySlider;
 
     QString m_currentFile;

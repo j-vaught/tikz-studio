@@ -24,6 +24,7 @@ set(SOURCES
     src/data/polygon.cpp
     src/data/curve.cpp
     src/data/ellipse.cpp
+    src/data/group.cpp
     src/data/document.cpp
     src/data/commands.cpp
     src/gui/mainwindow.cpp
@@ -36,6 +37,7 @@ set(SOURCES
     src/gui/polygonitem.cpp
     src/gui/curveitem.cpp
     src/gui/ellipseitem.cpp
+    src/gui/groupitem.cpp
     src/gui/propertiespanel.cpp
     src/gui/contexttoolbar.cpp
     src/gui/layerspanel.cpp
@@ -47,6 +49,7 @@ set(HEADERS
     src/data/polygon.h
     src/data/curve.h
     src/data/ellipse.h
+    src/data/group.h
     src/data/document.h
     src/data/commands.h
     src/gui/mainwindow.h
@@ -59,6 +62,7 @@ set(HEADERS
     src/gui/polygonitem.h
     src/gui/curveitem.h
     src/gui/ellipseitem.h
+    src/gui/groupitem.h
     src/gui/propertiespanel.h
     src/gui/contexttoolbar.h
     src/gui/layerspanel.h

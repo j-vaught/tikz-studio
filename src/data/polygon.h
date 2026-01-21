@@ -11,6 +11,19 @@
 
 class Point;
 
+// Type of polygon - determines editing behavior
+enum class PolygonType {
+    Freeform,       // User-defined polygon - vertex editing allowed
+    Triangle,       // Triangle - vertex editing allowed
+    Rectangle,      // Rectangle - corner rescaling only
+    Parallelogram,  // Parallelogram - corner rescaling only
+    RegularPolygon, // Regular n-gon - corner rescaling only
+    Diamond,        // Diamond/rhombus - corner rescaling only
+    Trapezoid,      // Trapezoid - corner rescaling only
+    Star,           // Star shape - corner rescaling only
+    Arrow           // Arrow shape - corner rescaling only
+};
+
 // Vertex with position and optional corner radius
 struct Vertex {
     QPointF pos;
@@ -25,6 +38,13 @@ class Polygon : public QObject {
 
 public:
     explicit Polygon(QObject *parent = nullptr);
+
+    // Polygon type (determines editing behavior)
+    PolygonType polygonType() const { return m_polygonType; }
+    void setPolygonType(PolygonType type) { m_polygonType = type; }
+    bool allowsVertexEditing() const {
+        return m_polygonType == PolygonType::Freeform || m_polygonType == PolygonType::Triangle;
+    }
 
     // Vertices
     QVector<Vertex> vertices() const { return m_vertices; }
@@ -87,6 +107,7 @@ signals:
 private:
     void onPointChanged();
 
+    PolygonType m_polygonType = PolygonType::Freeform;
     QVector<Vertex> m_vertices;
     QVector<Point*> m_pointRefs;  // Optional references to Point objects
 

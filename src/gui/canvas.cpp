@@ -5,12 +5,14 @@
 #include "polygon.h"
 #include "curve.h"
 #include "ellipse.h"
+#include "group.h"
 #include "commands.h"
 #include "pointitem.h"
 #include "lineitem.h"
 #include "polygonitem.h"
 #include "curveitem.h"
 #include "ellipseitem.h"
+#include "groupitem.h"
 #include "toolpalette.h"
 #include "colorpalette.h"
 #include "propertiespanel.h"
@@ -83,6 +85,16 @@ void Canvas::syncWithDocument() {
             removeItem(it.value());
             delete it.value();
             it = m_ellipseItems.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    for (auto it = m_groupItems.begin(); it != m_groupItems.end(); ) {
+        if (!m_document->groups().contains(it.key())) {
+            removeItem(it.value());
+            delete it.value();
+            it = m_groupItems.erase(it);
         } else {
             ++it;
         }
@@ -996,6 +1008,84 @@ void Canvas::distributeVertically() {
     emit statusMessage(QString("Distributed %1 shapes vertically").arg(selected.size()));
 }
 
+void Canvas::groupSelected() {
+    QList<QGraphicsItem*> selected = selectedItems();
+    if (selected.size() < 2) {
+        emit statusMessage("Select 2 or more shapes to group");
+        return;
+    }
+
+    // Create a new group in the document
+    Group *group = m_document->addGroup();
+
+    // Add all selected shapes to the group
+    for (QGraphicsItem *item : selected) {
+        if (PointItem *pi = qgraphicsitem_cast<PointItem*>(item)) {
+            group->addMember(pi->point(), GroupedShapeType::Point);
+        } else if (LineItem *li = qgraphicsitem_cast<LineItem*>(item)) {
+            group->addMember(li->line(), GroupedShapeType::Line);
+        } else if (PolygonItem *pi = qgraphicsitem_cast<PolygonItem*>(item)) {
+            group->addMember(pi->polygon(), GroupedShapeType::Polygon);
+        } else if (CurveItem *ci = qgraphicsitem_cast<CurveItem*>(item)) {
+            group->addMember(ci->curve(), GroupedShapeType::Curve);
+        } else if (EllipseItem *ei = qgraphicsitem_cast<EllipseItem*>(item)) {
+            group->addMember(ei->ellipse(), GroupedShapeType::Ellipse);
+        }
+    }
+
+    // Create group item and add children
+    GroupItem *groupItem = new GroupItem(group);
+    for (QGraphicsItem *item : selected) {
+        item->setSelected(false);
+        groupItem->addToGroup(item);
+    }
+    addItem(groupItem);
+    m_groupItems[group] = groupItem;
+
+    groupItem->setSelected(true);
+    emit statusMessage(QString("Grouped %1 shapes").arg(selected.size()));
+}
+
+void Canvas::ungroupSelected() {
+    QList<QGraphicsItem*> selected = selectedItems();
+
+    int ungroupedCount = 0;
+    for (QGraphicsItem *item : selected) {
+        if (GroupItem *gi = qgraphicsitem_cast<GroupItem*>(item)) {
+            Group *group = gi->group();
+
+            // Remove all children from the group item and restore them to scene
+            QList<QGraphicsItem*> children = gi->childItems();
+            for (QGraphicsItem *child : children) {
+                gi->removeFromGroup(child);
+                child->setSelected(true);
+            }
+
+            // Remove group from document
+            m_groupItems.remove(group);
+            removeItem(gi);
+            delete gi;
+            m_document->removeGroup(group);
+
+            ungroupedCount++;
+        }
+    }
+
+    if (ungroupedCount > 0) {
+        emit statusMessage(QString("Ungrouped %1 group(s)").arg(ungroupedCount));
+    } else {
+        emit statusMessage("No groups selected to ungroup");
+    }
+}
+
+void Canvas::addGroupItem(Group *group) {
+    if (m_groupItems.contains(group)) return;
+
+    GroupItem *item = new GroupItem(group);
+    addItem(item);
+    m_groupItems[group] = item;
+}
+
 void Canvas::setGridVisible(bool visible) {
     if (m_gridVisible != visible) {
         m_gridVisible = visible;
@@ -1396,6 +1486,7 @@ void Canvas::handlePolygonTool(QGraphicsSceneMouseEvent *event) {
 
         if (!m_currentPolygon) {
             m_currentPolygon = m_document->addPolygon();
+            m_currentPolygon->setPolygonType(PolygonType::Freeform);
 
             // Apply defaults from properties panel
             DrawingDefaults defaults;
@@ -1634,13 +1725,14 @@ void Canvas::handleShapeDrag(QGraphicsSceneMouseEvent *event) {
         float y1 = qMin(m_shapeStartPos.y(), currentPos.y());
         float x2 = qMax(m_shapeStartPos.x(), currentPos.x());
         float y2 = qMax(m_shapeStartPos.y(), currentPos.y());
-        float width = x2 - x1;
-        float skew = width * 0.25f;  // 25% skew
+        float height = y2 - y1;
+        // Calculate skew from angle: skew = height * tan(angle)
+        float skew = height * std::tan(m_parallelogramSkew * M_PI / 180.0f);
 
         QPolygonF poly;
         poly << toScreen(QPointF(x1 + skew, y2));   // Top left
-        poly << toScreen(QPointF(x2, y2));          // Top right
-        poly << toScreen(QPointF(x2 - skew, y1));   // Bottom right
+        poly << toScreen(QPointF(x2 + skew, y2));   // Top right
+        poly << toScreen(QPointF(x2, y1));          // Bottom right
         poly << toScreen(QPointF(x1, y1));          // Bottom left
 
         QGraphicsPolygonItem *polyItem = new QGraphicsPolygonItem(poly);
@@ -1695,6 +1787,7 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
 
     if (tool == Tool::Rectangle) {
         Polygon *poly = m_document->addPolygon();
+        poly->setPolygonType(PolygonType::Rectangle);
 
         // Apply all defaults
         poly->setFillColor(defaults.fillColor);
@@ -1768,6 +1861,7 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         float startAngle = std::atan2(delta.y(), delta.x());
 
         Polygon *poly = m_document->addPolygon();
+        poly->setPolygonType(tool == Tool::Triangle ? PolygonType::Triangle : PolygonType::RegularPolygon);
 
         // Apply all defaults
         poly->setFillColor(defaults.fillColor);
@@ -1798,6 +1892,7 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         float startAngle = std::atan2(delta.y(), delta.x());
 
         Polygon *poly = m_document->addPolygon();
+        poly->setPolygonType(PolygonType::Star);
 
         poly->setFillColor(defaults.fillColor);
         poly->setStrokeColor(defaults.strokeColor);
@@ -1824,6 +1919,7 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         float dy = std::abs(endPos.y() - m_shapeStartPos.y());
 
         Polygon *poly = m_document->addPolygon();
+        poly->setPolygonType(PolygonType::Diamond);
 
         poly->setFillColor(defaults.fillColor);
         poly->setStrokeColor(defaults.strokeColor);
@@ -1864,6 +1960,7 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         QPointF shaftEnd = m_shapeStartPos;
 
         Polygon *poly = m_document->addPolygon();
+        poly->setPolygonType(PolygonType::Arrow);
 
         poly->setFillColor(defaults.fillColor);
         poly->setStrokeColor(defaults.strokeColor);
@@ -1895,6 +1992,7 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         float inset = width * 0.2f;
 
         Polygon *poly = m_document->addPolygon();
+        poly->setPolygonType(PolygonType::Trapezoid);
 
         poly->setFillColor(defaults.fillColor);
         poly->setStrokeColor(defaults.strokeColor);
@@ -1920,10 +2018,12 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         float y1 = qMin(m_shapeStartPos.y(), endPos.y());
         float x2 = qMax(m_shapeStartPos.x(), endPos.x());
         float y2 = qMax(m_shapeStartPos.y(), endPos.y());
-        float width = x2 - x1;
-        float skew = width * 0.25f;
+        float height = y2 - y1;
+        // Calculate skew from angle: skew = height * tan(angle)
+        float skew = height * std::tan(m_parallelogramSkew * M_PI / 180.0f);
 
         Polygon *poly = m_document->addPolygon();
+        poly->setPolygonType(PolygonType::Parallelogram);
 
         poly->setFillColor(defaults.fillColor);
         poly->setStrokeColor(defaults.strokeColor);
@@ -1938,11 +2038,11 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->setDefaultCornerRadius(defaults.cornerRadius);
 
         poly->addVertex(QPointF(x1 + skew, y2));
-        poly->addVertex(QPointF(x2, y2));
-        poly->addVertex(QPointF(x2 - skew, y1));
+        poly->addVertex(QPointF(x2 + skew, y2));
+        poly->addVertex(QPointF(x2, y1));
         poly->addVertex(QPointF(x1, y1));
 
-        emit statusMessage("Parallelogram created");
+        emit statusMessage(QString("Parallelogram created (skew: %1°)").arg(m_parallelogramSkew));
     }
     else if (tool == Tool::Arc) {
         // For now, create arc as a curve with multiple points

@@ -12,9 +12,10 @@ class Line;
 class Polygon;
 class Curve;
 class Ellipse;
+class Group;
 
 // Shape order tracking
-enum class ShapeType { Point, Line, Polygon, Curve, Ellipse };
+enum class ShapeType { Point, Line, Polygon, Curve, Ellipse, Group };
 struct ShapeRef {
     ShapeType type;
     void *ptr;
@@ -54,6 +55,11 @@ public:
     Ellipse *addCircle(QPointF center, float radius);
     Ellipse *addEllipse(QPointF center, float rx, float ry);
     void removeEllipse(Ellipse *ellipse);
+
+    // Groups
+    const QVector<Group*> &groups() const { return m_groups; }
+    Group *addGroup();
+    void removeGroup(Group *group);
 
     // Clear all
     void clear();
@@ -116,6 +122,7 @@ private:
     QVector<Polygon*> m_polygons;
     QVector<Curve*> m_curves;
     QVector<Ellipse*> m_ellipses;
+    QVector<Group*> m_groups;
     QVector<ShapeRef> m_shapeOrder;  // Tracks drawing order
 
     QUndoStack m_undoStack;

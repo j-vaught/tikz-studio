@@ -12,11 +12,13 @@ class Line;
 class Polygon;
 class Curve;
 class Ellipse;
+class Group;
 class PointItem;
 class LineItem;
 class PolygonItem;
 class CurveItem;
 class EllipseItem;
+class GroupItem;
 class ToolPalette;
 class ColorPalette;
 class PropertiesPanel;
@@ -36,6 +38,10 @@ public:
     // Number of sides for regular polygon tool
     int regularPolygonSides() const { return m_regPolySides; }
     void setRegularPolygonSides(int sides) { m_regPolySides = qBound(3, sides, 20); }
+
+    // Parallelogram skew angle (degrees from vertical, 0-45)
+    int parallelogramSkew() const { return m_parallelogramSkew; }
+    void setParallelogramSkew(int degrees) { m_parallelogramSkew = qBound(0, degrees, 45); }
 
     // Sync graphics items with document
     void syncWithDocument();
@@ -66,6 +72,10 @@ public:
     void distributeHorizontally();
     void distributeVertically();
 
+    // Grouping
+    void groupSelected();
+    void ungroupSelected();
+
     // Grid and axis visibility
     bool gridVisible() const { return m_gridVisible; }
     void setGridVisible(bool visible);
@@ -95,6 +105,7 @@ private:
     void addPolygonItem(Polygon *polygon);
     void addCurveItem(Curve *curve);
     void addEllipseItem(Ellipse *ellipse);
+    void addGroupItem(Group *group);
 
     void handleSelectTool(QGraphicsSceneMouseEvent *event);
     void handlePointTool(QGraphicsSceneMouseEvent *event);
@@ -122,6 +133,7 @@ private:
     QMap<Polygon*, PolygonItem*> m_polygonItems;
     QMap<Curve*, CurveItem*> m_curveItems;
     QMap<Ellipse*, EllipseItem*> m_ellipseItems;
+    QMap<Group*, GroupItem*> m_groupItems;
 
     // Interaction state
     bool m_drawing = false;
@@ -138,6 +150,7 @@ private:
     QGraphicsItem *m_previewShape = nullptr;
 
     int m_regPolySides = 6;  // Default for N-gon
+    int m_parallelogramSkew = 20;  // Default skew angle in degrees
 
     bool m_gridVisible = true;
     bool m_axesVisible = true;

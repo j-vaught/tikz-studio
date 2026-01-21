@@ -72,15 +72,15 @@ void LayersPanel::refresh() {
         }
     }
 
-    m_layerList->blockSignals(false);
-
-    // Select current layer
+    // Select current layer (keep signals blocked)
     for (int i = 0; i < m_layerList->count(); ++i) {
         if (m_layerList->item(i)->data(Qt::UserRole).toInt() == m_document->currentLayer()) {
             m_layerList->setCurrentRow(i);
             break;
         }
     }
+
+    m_layerList->blockSignals(false);
 
     // Update remove button state
     m_removeButton->setEnabled(layers.size() > 1);

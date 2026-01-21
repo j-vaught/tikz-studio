@@ -358,13 +358,24 @@ void MainWindow::setupMenus() {
     QAction *distVAction = arrangeMenu->addAction("Distribute Verticall&y");
     connect(distVAction, &QAction::triggered, m_canvas, &Canvas::distributeVertically);
 
+    arrangeMenu->addSeparator();
+
+    // Grouping
+    QAction *groupAction = arrangeMenu->addAction("&Group");
+    groupAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
+    connect(groupAction, &QAction::triggered, m_canvas, &Canvas::groupSelected);
+
+    QAction *ungroupAction = arrangeMenu->addAction("&Ungroup");
+    ungroupAction->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_G));
+    connect(ungroupAction, &QAction::triggered, m_canvas, &Canvas::ungroupSelected);
+
     // View menu
     QMenu *viewMenu = menuBar()->addMenu("&View");
 
     QAction *gridAction = viewMenu->addAction("Show &Grid", this, &MainWindow::toggleGrid);
     gridAction->setCheckable(true);
     gridAction->setChecked(true);
-    gridAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
+    gridAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Apostrophe));
 
     viewMenu->addSeparator();
 
@@ -416,6 +427,22 @@ void MainWindow::setupToolbars() {
 
     connect(m_ngonSidesSpin, QOverload<int>::of(&QSpinBox::valueChanged),
             m_canvas, &Canvas::setRegularPolygonSides);
+
+    mainToolbar->addSeparator();
+
+    // Parallelogram skew angle spinner
+    QLabel *skewLabel = new QLabel(" Skew angle: ");
+    mainToolbar->addWidget(skewLabel);
+
+    m_parallelogramSkewSpin = new QSpinBox();
+    m_parallelogramSkewSpin->setRange(0, 45);
+    m_parallelogramSkewSpin->setValue(20);
+    m_parallelogramSkewSpin->setSuffix("°");
+    m_parallelogramSkewSpin->setToolTip("Skew angle for parallelogram tool (0° = rectangle, 45° = max slant)");
+    mainToolbar->addWidget(m_parallelogramSkewSpin);
+
+    connect(m_parallelogramSkewSpin, QOverload<int>::of(&QSpinBox::valueChanged),
+            m_canvas, &Canvas::setParallelogramSkew);
 
     // Context toolbar (properties for selected items)
     m_contextToolbar = new ContextToolbar(this);

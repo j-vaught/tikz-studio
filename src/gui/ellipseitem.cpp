@@ -4,6 +4,11 @@
 
 #include <QPen>
 #include <QBrush>
+#include <QPainter>
+#include <QGraphicsSceneMouseEvent>
+#include <QGraphicsSceneHoverEvent>
+#include <QCursor>
+#include <QtMath>
 
 EllipseItem::EllipseItem(Ellipse *ellipse, QGraphicsItem *parent)
     : QGraphicsEllipseItem(parent)
@@ -160,4 +165,198 @@ void EllipseItem::updateFromModel() {
             break;
     }
     setBrush(brush);
+}
+
+QRectF EllipseItem::boundingRect() const {
+    QRectF base = QGraphicsEllipseItem::boundingRect();
+    if (isSelected()) {
+        // Expand to include rotation handle
+        QPointF rotPos = handlePosition(Rotation);
+        QRectF rotRect(rotPos.x() - HANDLE_SIZE, rotPos.y() - HANDLE_SIZE,
+                       HANDLE_SIZE * 2, HANDLE_SIZE * 2);
+        base = base.united(rotRect);
+
+        // Expand for corner handles
+        base.adjust(-HANDLE_SIZE, -HANDLE_SIZE, HANDLE_SIZE, HANDLE_SIZE);
+    }
+    return base;
+}
+
+QPainterPath EllipseItem::shape() const {
+    QPainterPath p = QGraphicsEllipseItem::shape();
+    if (isSelected()) {
+        // Add handles to shape
+        for (int i = TopLeft; i <= Rotation; ++i) {
+            QPointF pos = handlePosition(static_cast<HandleType>(i));
+            if (i == Rotation) {
+                p.addEllipse(pos, HANDLE_SIZE, HANDLE_SIZE);
+            } else {
+                p.addRect(pos.x() - HANDLE_SIZE, pos.y() - HANDLE_SIZE,
+                         HANDLE_SIZE * 2, HANDLE_SIZE * 2);
+            }
+        }
+    }
+    return p;
+}
+
+void EllipseItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
+                        QWidget *widget) {
+    // Draw the ellipse itself
+    QGraphicsEllipseItem::paint(painter, option, widget);
+
+    // Draw handles when selected
+    if (isSelected() && m_ellipse) {
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, true);
+
+        // Draw corner resize handles
+        QPen handlePen(UofSC::Atlantic());
+        handlePen.setWidthF(1.5);
+        handlePen.setCosmetic(true);
+        painter->setPen(handlePen);
+        painter->setBrush(Qt::white);
+
+        for (int i = TopLeft; i <= BottomLeft; ++i) {
+            QPointF pos = handlePosition(static_cast<HandleType>(i));
+            QRectF handleRect(pos.x() - HANDLE_SIZE/2,
+                             pos.y() - HANDLE_SIZE/2,
+                             HANDLE_SIZE, HANDLE_SIZE);
+            painter->drawRect(handleRect);
+        }
+
+        // Draw rotation handle
+        QPointF rotPos = handlePosition(Rotation);
+        QPointF topCenter(0, rect().top());
+
+        // Draw line from top center to rotation handle
+        QPen linePen(UofSC::Atlantic());
+        linePen.setStyle(Qt::DashLine);
+        linePen.setCosmetic(true);
+        painter->setPen(linePen);
+        painter->drawLine(topCenter, rotPos);
+
+        // Draw rotation handle as a circle
+        painter->setPen(handlePen);
+        painter->setBrush(UofSC::Garnet());
+        painter->drawEllipse(rotPos, HANDLE_SIZE/2, HANDLE_SIZE/2);
+
+        painter->restore();
+    }
+}
+
+QPointF EllipseItem::handlePosition(HandleType handle) const {
+    QRectF r = rect();
+    switch (handle) {
+        case TopLeft:     return r.topLeft();
+        case TopRight:    return r.topRight();
+        case BottomRight: return r.bottomRight();
+        case BottomLeft:  return r.bottomLeft();
+        case Rotation:    return QPointF(0, r.top() - ROTATION_HANDLE_DISTANCE);
+        default:          return QPointF(0, 0);
+    }
+}
+
+EllipseItem::HandleType EllipseItem::handleAtPos(const QPointF &pos) const {
+    for (int i = TopLeft; i <= Rotation; ++i) {
+        HandleType h = static_cast<HandleType>(i);
+        QPointF handlePos = handlePosition(h);
+        QRectF handleRect(handlePos.x() - HANDLE_SIZE,
+                         handlePos.y() - HANDLE_SIZE,
+                         HANDLE_SIZE * 2, HANDLE_SIZE * 2);
+        if (handleRect.contains(pos)) {
+            return h;
+        }
+    }
+    return None;
+}
+
+void EllipseItem::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    if (event->button() == Qt::LeftButton && isSelected()) {
+        QPointF pos = event->pos();
+        HandleType handle = handleAtPos(pos);
+
+        if (handle != None) {
+            m_dragHandle = handle;
+            m_dragStartPos = event->pos();  // In item local coordinates
+            m_dragStartRx = m_ellipse->radiusX();
+            m_dragStartRy = m_ellipse->radiusY();
+            m_dragStartRotation = m_ellipse->rotation();
+            event->accept();
+            return;
+        }
+    }
+
+    QGraphicsEllipseItem::mousePressEvent(event);
+}
+
+void EllipseItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
+    if (m_dragHandle != None && m_ellipse) {
+        QPointF currentPos = event->pos();  // In item local coordinates
+
+        if (m_dragHandle == Rotation) {
+            // Calculate rotation based on mouse position relative to center
+            QPointF center = this->scenePos();
+            QPointF startVec = mapToScene(m_dragStartPos) - center;
+            QPointF currentVec = event->scenePos() - center;
+
+            float startAngle = std::atan2(startVec.y(), startVec.x());
+            float currentAngle = std::atan2(currentVec.y(), currentVec.x());
+            float deltaAngle = (currentAngle - startAngle) * 180.0f / M_PI;
+
+            m_ellipse->setRotation(m_dragStartRotation + deltaAngle);
+        } else {
+            // Corner resize in object's local reference frame
+            // currentPos is already in local coordinates (item coords)
+            // The item's rect is centered at (0,0), so the handle positions
+            // directly give us the radii
+
+            // Get the signed distance from center in local coords
+            float localX = std::abs(currentPos.x());
+            float localY = std::abs(currentPos.y());
+
+            // Convert from screen to TikZ coordinates
+            float newRx = fromScreen(localX);
+            float newRy = fromScreen(localY);
+
+            // Clamp to minimum size
+            newRx = qMax(0.1f, newRx);
+            newRy = qMax(0.1f, newRy);
+
+            m_ellipse->setRadiusX(newRx);
+            m_ellipse->setRadiusY(newRy);
+        }
+
+        event->accept();
+        return;
+    }
+
+    QGraphicsEllipseItem::mouseMoveEvent(event);
+}
+
+void EllipseItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
+    m_dragHandle = None;
+    QGraphicsEllipseItem::mouseReleaseEvent(event);
+}
+
+void EllipseItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event) {
+    if (isSelected()) {
+        HandleType handle = handleAtPos(event->pos());
+
+        if (handle == Rotation) {
+            setCursor(Qt::CrossCursor);
+        } else if (handle != None) {
+            // Corner handles - diagonal resize cursor
+            if (handle == TopLeft || handle == BottomRight) {
+                setCursor(Qt::SizeFDiagCursor);
+            } else {
+                setCursor(Qt::SizeBDiagCursor);
+            }
+        } else {
+            setCursor(Qt::ArrowCursor);
+        }
+    } else {
+        setCursor(Qt::ArrowCursor);
+    }
+
+    QGraphicsEllipseItem::hoverMoveEvent(event);
 }
