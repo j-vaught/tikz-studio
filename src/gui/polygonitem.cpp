@@ -451,6 +451,15 @@ void PolygonItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
         scaleX = qMax(0.1f, scaleX);
         scaleY = qMax(0.1f, scaleY);
 
+        // For complex shapes (Arrow, Star, RegularPolygon), use uniform scaling
+        // to preserve proportions since non-uniform scaling distorts them
+        PolygonType ptype = m_polygon->polygonType();
+        if (ptype == PolygonType::Arrow || ptype == PolygonType::Star ||
+            ptype == PolygonType::RegularPolygon || ptype == PolygonType::Diamond) {
+            float uniformScale = (scaleX + scaleY) / 2.0f;
+            scaleX = scaleY = uniformScale;
+        }
+
         // Calculate TikZ center
         QPointF tikzCenter(
             m_dragStartBounds.x() + m_dragStartBounds.width() / 2,
