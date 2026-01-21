@@ -104,6 +104,7 @@ private slots:
     void onRadiusXChanged(double value);
     void onRadiusYChanged(double value);
     void onTensionChanged(double value);
+    void onSkewAngleChanged(int value);
 
 private:
     void setupUI();
@@ -158,6 +159,10 @@ private:
     // Curve properties
     QGroupBox *m_curveGroup;
     QDoubleSpinBox *m_tensionSpin;
+
+    // Parallelogram properties
+    QGroupBox *m_parallelogramGroup;
+    QSpinBox *m_skewAngleSpin;
 
     // Current state
     Tool m_currentTool = Tool::Select;

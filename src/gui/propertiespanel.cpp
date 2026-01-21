@@ -271,6 +271,23 @@ void PropertiesPanel::setupUI() {
     m_mainLayout->addWidget(m_curveGroup);
     m_curveGroup->hide();
 
+    // === PARALLELOGRAM GROUP ===
+    m_parallelogramGroup = new QGroupBox("Parallelogram");
+    m_parallelogramGroup->setStyleSheet("QGroupBox { font-weight: bold; }");
+    QFormLayout *parallelogramLayout = new QFormLayout(m_parallelogramGroup);
+
+    m_skewAngleSpin = new QSpinBox();
+    m_skewAngleSpin->setRange(0, 45);
+    m_skewAngleSpin->setValue(20);
+    m_skewAngleSpin->setSuffix("°");
+    m_skewAngleSpin->setToolTip("Skew angle (0° = rectangle, 45° = max slant)");
+    parallelogramLayout->addRow("Skew Angle:", m_skewAngleSpin);
+    connect(m_skewAngleSpin, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, &PropertiesPanel::onSkewAngleChanged);
+
+    m_mainLayout->addWidget(m_parallelogramGroup);
+    m_parallelogramGroup->hide();
+
     // Add stretch at bottom
     m_mainLayout->addStretch();
 
@@ -286,6 +303,7 @@ void PropertiesPanel::hideAllGroups() {
     m_cornerGroup->hide();
     m_ellipseGroup->hide();
     m_curveGroup->hide();
+    m_parallelogramGroup->hide();
 }
 
 void PropertiesPanel::updateColorButton(QPushButton *btn, const QColor &color) {
@@ -606,6 +624,13 @@ void PropertiesPanel::showPolygonProperties(Polygon *polygon) {
         m_vertexCornerRadiusSpin->setValue(polygon->vertices()[0].cornerRadius);
     }
 
+    // Show parallelogram group for parallelogram and trapezoid shapes
+    PolygonType ptype = polygon->polygonType();
+    if (ptype == PolygonType::Parallelogram || ptype == PolygonType::Trapezoid) {
+        m_parallelogramGroup->show();
+        m_skewAngleSpin->setValue(static_cast<int>(polygon->skewAngle()));
+    }
+
     m_updating = false;
 }
 
@@ -924,6 +949,19 @@ void PropertiesPanel::onTensionChanged(double value) {
 
     if (m_currentCurve) {
         m_currentCurve->setTension(value);
+    }
+
+    emit propertiesChanged();
+}
+
+void PropertiesPanel::onSkewAngleChanged(int value) {
+    if (m_updating) return;
+
+    if (m_currentPolygon) {
+        PolygonType ptype = m_currentPolygon->polygonType();
+        if (ptype == PolygonType::Parallelogram || ptype == PolygonType::Trapezoid) {
+            m_currentPolygon->setSkewAngle(static_cast<float>(value));
+        }
     }
 
     emit propertiesChanged();

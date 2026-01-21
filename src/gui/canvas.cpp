@@ -2042,6 +2042,9 @@ void Canvas::finishShapeDrag(QGraphicsSceneMouseEvent *event) {
         poly->addVertex(QPointF(x2, y1));
         poly->addVertex(QPointF(x1, y1));
 
+        // Store the skew angle so it can be edited later in properties panel
+        poly->setInitialSkewAngle(m_parallelogramSkew);
+
         emit statusMessage(QString("Parallelogram created (skew: %1°)").arg(m_parallelogramSkew));
     }
     else if (tool == Tool::Arc) {

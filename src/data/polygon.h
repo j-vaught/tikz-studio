@@ -95,6 +95,11 @@ public:
     float defaultCornerRadius() const { return m_defaultCornerRadius; }
     void setDefaultCornerRadius(float radius);
 
+    // Skew angle for parallelogram/trapezoid (degrees, 0-45)
+    float skewAngle() const { return m_skewAngle; }
+    void setSkewAngle(float degrees);  // Recalculates vertices
+    void setInitialSkewAngle(float degrees) { m_skewAngle = qBound(0.0f, degrees, 45.0f); }  // Just stores, no recalc
+
     // Generate painter path with rounded corners
     QPainterPath painterPath() const;
 
@@ -122,6 +127,7 @@ private:
     float m_rotation = 0.0f;
     float m_scale = 1.0f;
     float m_defaultCornerRadius = 0.0f;
+    float m_skewAngle = 20.0f;  // Skew angle for parallelogram/trapezoid in degrees
 };
 
 #endif // POLYGON_H

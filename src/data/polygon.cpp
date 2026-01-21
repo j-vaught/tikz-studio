@@ -170,6 +170,32 @@ void Polygon::setDefaultCornerRadius(float radius) {
     }
 }
 
+void Polygon::setSkewAngle(float degrees) {
+    degrees = qBound(0.0f, degrees, 45.0f);
+    if (m_skewAngle == degrees) return;
+
+    // Only applies to parallelograms (4 vertices)
+    if (m_polygonType == PolygonType::Parallelogram && m_vertices.size() == 4) {
+        // Parallelogram vertices: 0=top-left, 1=top-right, 2=bottom-right, 3=bottom-left
+        // Bottom edge is at vertices 2 and 3, top edge at 0 and 1
+        float x1 = m_vertices[3].pos.x();  // bottom-left x
+        float x2 = m_vertices[2].pos.x();  // bottom-right x
+        float y1 = m_vertices[2].pos.y();  // bottom y
+        float y2 = m_vertices[0].pos.y();  // top y
+        float height = y2 - y1;
+
+        // Calculate new skew
+        float newSkew = height * std::tan(degrees * M_PI / 180.0f);
+
+        // Update top vertices
+        m_vertices[0].pos = QPointF(x1 + newSkew, y2);  // top-left
+        m_vertices[1].pos = QPointF(x2 + newSkew, y2);  // top-right
+    }
+
+    m_skewAngle = degrees;
+    emit changed();
+}
+
 void Polygon::onPointChanged() {
     emit changed();
 }
