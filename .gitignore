@@ -15,6 +15,7 @@ qrc_*.cpp
 
 # macOS
 .DS_Store
+._*
 *.app
 
 # IDE
