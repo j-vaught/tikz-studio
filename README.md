@@ -202,6 +202,15 @@ Right-click on any shape to access:
 - [ ] **Theming**: Dark mode support
 - [ ] **Plugin system**: Extensible tool/shape system
 
+### Intelligent Drawing Tools
+
+- [ ] **Image-to-TikZ vectorization**: Import a raster image and automatically trace it into editable TikZ shapes using edge detection and contour extraction
+- [ ] **Path simplification**: Use Ramer-Douglas-Peucker with a user-controlled epsilon to trade accuracy for readability — fewer bezier control points, shorter decimals
+- [ ] **Coordinate snapping on import**: Round all imported coordinates to a configurable grid (e.g. 0.25 units) to eliminate ugly long decimals and produce human-readable output
+- [ ] **Primitive recognition**: Detect circles, ellipses, and polylines in traced contours and emit native TikZ primitives (`\draw ... circle`, `ellipse`, `--`) instead of bezier approximations
+- [ ] **Color region detection**: Segment color regions from the source image and assign fill colors to closed shapes automatically
+- [ ] **Control system diagram import**: Recognize handdrawn block diagram elements (blocks, summing junctions, signal lines, arrowheads) and emit semantic TikZ using the `positioning` and `arrows` libraries with relative node placement rather than raw coordinates
+
 ### Code Quality
 
 - [ ] **Unit tests**: Add tests for coordinate transforms, TikZ generation
