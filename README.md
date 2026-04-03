@@ -210,6 +210,11 @@ Right-click on any shape to access:
 - [ ] **Primitive recognition**: Detect circles, ellipses, and polylines in traced contours and emit native TikZ primitives (`\draw ... circle`, `ellipse`, `--`) instead of bezier approximations
 - [ ] **Color region detection**: Segment color regions from the source image and assign fill colors to closed shapes automatically
 - [ ] **Control system diagram import**: Recognize handdrawn block diagram elements (blocks, summing junctions, signal lines, arrowheads) and emit semantic TikZ using the `positioning` and `arrows` libraries with relative node placement rather than raw coordinates
+- [ ] **Transfer function parsing**: Parse user-provided transfer function labels (e.g. `K/(s+a)`, `s^2 + 2*zeta*omega*s + omega^2`) into symbolic form using SymPy for downstream analysis
+- [ ] **Block diagram reduction**: Compute closed-loop transfer function from extracted topology — series/parallel/single-loop cases first, with Mason's gain formula for multi-loop systems
+- [ ] **System analysis backend**: Call `python-control` as a subprocess to compute step response, impulse response, Bode plot, Nyquist, and root locus from the reduced transfer function
+- [ ] **Analysis type inference**: Detect system type from diagram structure (PID, filter, observer, etc.) and offer the most relevant analyses automatically
+- [ ] **Response plot codegen**: Generate `pgfplots` TikZ from simulation output and insert the resulting plot directly into the tikz-studio document as an editable figure
 
 ### Code Quality
 
